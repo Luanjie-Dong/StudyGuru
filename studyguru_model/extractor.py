@@ -103,6 +103,13 @@ class SGExtractor:
         if file_type in (".jpg", ".png", ".bmp", ".tiff"):
             return self.read_image(self.data)
         
+    
+    def save_test_data(self,save_path):
+
+        with open(save_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        print(f"test data saved as {save_path}!")
 
         
 
@@ -113,9 +120,12 @@ class SGExtractor:
 
 if __name__=="__main__":
 
-    test_type = "png"
+    test_type = "pdf"
     test_path = f'test_data/test.{test_type}'
     extractor = SGExtractor(test_path)
     content = extractor.extract_content()
     print(content)
+
+    save_path = f"test_data/test_result({test_type}).txt"
+    save_test_content = extractor.save_test_data(save_path)
 
