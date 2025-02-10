@@ -19,7 +19,7 @@ load_dotenv()
 
 # StudyGuru Rag Model = SGRagModel
 class SGRagModel:
-    def __init__(self, llm, embedding , data):
+    def __init__(self, llm, embedding , data , collection):
         
         self.data = data
         self.llm = llm 
@@ -28,7 +28,7 @@ class SGRagModel:
         self.chunk_size = 200
         self.chunk_overlap = 50
         self.db = chromadb.PersistentClient(path="./chroma_db")
-        self.collection_name = "document_store"
+        self.collection_name = collection
 
         self.chroma_collection = self.db.get_or_create_collection(name=self.collection_name)
         self.vector_store = ChromaVectorStore(self.chroma_collection)
@@ -49,16 +49,19 @@ class SGRagModel:
         ]
         return page_documents
     
-    def contextual_chunking(self,chunk):
+    def contextual_chunking(self, chunk, chunk_info):
+        print(f"Extracting title for: {chunk_info}")
 
-        context_prompt = f"INSTRUCTIONS: What is the title of the following document? Your response MUST be the title of the document, and nothing else. DO NOT respond with anything else. DOCUMENT {chunk}"
+        prompt = (
+            f"INSTRUCTIONS: Identify the title of the following document. If you are not able to find the title then use a appriopriate summary title "
+            f"Respond with ONLY the title and nothing else. "
+            f"\n\nDOCUMENT:\n{chunk}"
+        )
 
-        truncation_prompt = f"Also note that the document text provided below is just the first ~{len(chunk)} words of the document. That should be plenty for this task. Your response should still pertain to the entire document, not just the text provided below."
-        
-        chunk_context = self.llm.complete(context_prompt+"\n\n"+truncation_prompt)
-        time.sleep(2)
+        chunk_title = self.llm.complete(prompt)
+        time.sleep(5)
 
-        return chunk_context
+        return chunk_title
 
 
     def ingest_documents(self):
@@ -79,7 +82,7 @@ class SGRagModel:
         nodes = pipeline.run(documents=documents)
 
         document_nodes = [
-            Document(text="Chunk title: "+self.contextual_chunking(node.text)+"\n"+ "Chunk Information: "+node.text,
+            Document(text="Chunk title: "+self.contextual_chunking(node.text,node.metadata)+"\n"+ "Chunk Information: "+node.text,
                      metadata=node.metadata,
                      id_=hashlib.sha256(node.text.encode()).hexdigest()) 
             for node in nodes
@@ -116,7 +119,7 @@ class SGRagModel:
 
     def answer(self,context,query):
         context_text = "\n".join(node.text for node in context)
-        prompt = f"{context_text}\n\n{query}"
+        prompt = f"Context: {context_text}\n\n Query: {query}"
         return self.llm.complete(prompt)
 
 
@@ -125,7 +128,6 @@ class HuggingFaceQALLM():
         self.qa_pipeline = pipeline("question-answering", model=model_name)
 
     def complete(self, prompt):
-        """Generate a response based on context"""
         context, question = prompt.split("\n\n", 1)
         response = self.qa_pipeline(question=question, context=context)
         return response["answer"]
@@ -151,17 +153,20 @@ if __name__ == "__main__":
     hugging_llm  = "microsoft/phi-2"
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     gemini_model = "gemini-2.0-flash"
+    collection = "document_store"
 
     # llm_model = HuggingFaceQALLM(hugging_llm)
     llm_model = GeminiLLM(gemini_model)
     embedding_model = HuggingFaceEmbedding(model_name=hugging_embedding)
 
-    rag = SGRagModel(llm_model, embedding_model, data_path)
+    rag = SGRagModel(llm_model, embedding_model, data_path, collection)
     rag.ingest_documents()
 
-    test_query = "What are the measurements?"
+    test_query = "What are the content?"
     context = rag.retrieve(test_query)
 
     context_display = rag.show_context(context)
     response = rag.answer(context,test_query)
     print(response)
+
+    del rag
