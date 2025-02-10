@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import hashlib
 from transformers import pipeline
 from google import genai
+import time
 
 load_dotenv()
 
@@ -47,6 +48,18 @@ class SGRagModel:
             for chunk in content
         ]
         return page_documents
+    
+    def contextual_chunking(self,chunk):
+
+        context_prompt = f"INSTRUCTIONS: What is the title of the following document? Your response MUST be the title of the document, and nothing else. DO NOT respond with anything else. DOCUMENT {chunk}"
+
+        truncation_prompt = f"Also note that the document text provided below is just the first ~{len(chunk)} words of the document. That should be plenty for this task. Your response should still pertain to the entire document, not just the text provided below."
+        
+        chunk_context = self.llm.complete(context_prompt+"\n\n"+truncation_prompt)
+        time.sleep(2)
+
+        return chunk_context
+
 
     def ingest_documents(self):
         print(f"Checking if this {self.data} has already been processed...")
@@ -66,7 +79,10 @@ class SGRagModel:
         nodes = pipeline.run(documents=documents)
 
         document_nodes = [
-            Document(text=node.text, metadata=node.metadata, id_=hashlib.sha256(node.text.encode()).hexdigest()) for node in nodes
+            Document(text="Chunk title: "+self.contextual_chunking(node.text)+"\n"+ "Chunk Information: "+node.text,
+                     metadata=node.metadata,
+                     id_=hashlib.sha256(node.text.encode()).hexdigest()) 
+            for node in nodes
         ]
 
         self.index = VectorStoreIndex.from_documents(document_nodes, storage_context=self.storage_context, embed_model=self.embedding)
@@ -132,9 +148,13 @@ class GeminiLLM:
 
 if __name__ == "__main__":
     data_path = "test_data/test.pdf"
+    hugging_llm  = "microsoft/phi-2"
+    hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
+    gemini_model = "gemini-2.0-flash"
 
-    llm_model = GeminiLLM()
-    embedding_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-mpnet-base-v2")
+    # llm_model = HuggingFaceQALLM(hugging_llm)
+    llm_model = GeminiLLM(gemini_model)
+    embedding_model = HuggingFaceEmbedding(model_name=hugging_embedding)
 
     rag = SGRagModel(llm_model, embedding_model, data_path)
     rag.ingest_documents()
