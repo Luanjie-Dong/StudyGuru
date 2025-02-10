@@ -1,3 +1,5 @@
 studyguru_model_env
 test_data
 .env
+chroma_db
+backups
