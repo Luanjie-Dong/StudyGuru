@@ -3,3 +3,4 @@ test_data
 .env
 chroma_db
 backups
+.DS_Store
