@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+from supabaseClient import supabase
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import os
+
+app = Flask(__name__)
+
+CORS(app)
+
+@app.route("/users", methods=['GET'])
+def get_one_user_info():
+    data = request.get_json()
+    """
+        Sample Data:
+            {
+                "userid":"c6dd5e2b-9c1d-4109-8ba3-3e246c9ec815"
+            }
+        Returns:
+        [
+            {
+                "created_at": "2025-02-14T14:46:22.1489+00:00",
+                "power_freeze": 0,
+                "power_hint": 0,
+                "power_option": 0,
+                "userid": "c6dd5e2b-9c1d-4109-8ba3-3e246c9ec815",
+                "username": "test2"
+            }
+        ]
+    """
+    if not data or 'userid' not in data:
+        return jsonify({'Error':'Missing userid.'}),400
+    
+    userid = data['userid']
+    try:
+        response = (
+            supabase.table('users')
+            .select('*')
+            .eq('userid',userid)
+            .execute())
+        if response.data:
+            return jsonify(response.data),200
+        else:
+            return jsonify({'Error':"User not found"}),404
+    except Exception as e:
+        return jsonify({"Error":str(e)}),500
+    
+
+if __name__=='__main__':
+    print("This is flask for " + os.path.basename(__file__) + ": users ...")
+    app.run(debug=True)
+
+    
