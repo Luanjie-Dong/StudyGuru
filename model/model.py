@@ -9,7 +9,7 @@ from extractor import SGExtractor
 import os
 from dotenv import load_dotenv
 import hashlib
-from transformers import pipeline
+from transformers import pipeline , AutoTokenizer
 from google import genai
 import time
 
@@ -124,7 +124,7 @@ class SGRagModel:
 
 
 class HuggingFaceQALLM():
-    def __init__(self, model_name="distilbert/distilbert-base-cased-distilled-squad"):
+    def __init__(self, model_name="distilbert/distilbert-base-cased-distilled-squad", max_length=512):
         self.qa_pipeline = pipeline("question-answering", model=model_name)
 
     def complete(self, prompt):
@@ -147,22 +147,24 @@ class GeminiLLM:
         )
 
         return response.text if response else "No response from Gemini."
+    
 
 if __name__ == "__main__":
     data_path = "test_data/test.pdf"
-    hugging_llm  = "microsoft/phi-2"
+    hugging_llm  = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     gemini_model = "gemini-2.0-flash"
     collection = "document_store"
 
-    # llm_model = HuggingFaceQALLM(hugging_llm)
+    # llm_model = HuggingFaceQALLM()
     llm_model = GeminiLLM(gemini_model)
+
     embedding_model = HuggingFaceEmbedding(model_name=hugging_embedding)
 
     rag = SGRagModel(llm_model, embedding_model, data_path, collection)
     rag.ingest_documents()
 
-    test_query = "What are the content?"
+    test_query = "What are the regression measurements?"
     context = rag.retrieve(test_query)
 
     context_display = rag.show_context(context)
