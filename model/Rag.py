@@ -5,13 +5,14 @@ from llama_index.core.text_splitter import SentenceSplitter
 from llama_index.vector_stores.chroma.base import ChromaVectorStore
 
 import chromadb
-from extractor import SGExtractor
+from Extractor import SGExtractor
 import os
 from dotenv import load_dotenv
 import hashlib
 from transformers import pipeline , AutoTokenizer
 from google import genai
 import time
+from transformers import pipeline
 
 load_dotenv()
 
@@ -19,14 +20,12 @@ load_dotenv()
 
 # StudyGuru Rag Model = SGRagModel
 class SGRagModel:
-    def __init__(self, llm, embedding , data , collection):
+    def __init__(self, embedding , data , collection):
         
         self.data = data
-        self.llm = llm 
-        self.embedding = embedding
-        self.dimension = 512
-        self.chunk_size = 200
-        self.chunk_overlap = 50
+        self.embedding = HuggingFaceEmbedding(model_name=embedding)
+        self.chunk_size = 512
+        self.chunk_overlap = 100
         self.db = chromadb.PersistentClient(path="./chroma_db")
         self.collection_name = collection
 
@@ -34,6 +33,7 @@ class SGRagModel:
         self.vector_store = ChromaVectorStore(self.chroma_collection)
         self.index = None 
         self.storage_context = StorageContext.from_defaults(vector_store=self.vector_store)
+        self.title_extractor = pipeline("summarization", model="Falconsai/text_summarization")
         
     def process_documents(self,file_path):
         print(f"Processing Documents from {file_path}")
@@ -50,18 +50,26 @@ class SGRagModel:
         return page_documents
     
     def contextual_chunking(self, chunk, chunk_info):
+
         print(f"Extracting title for: {chunk_info}")
 
-        prompt = (
-            f"INSTRUCTIONS: Identify the title of the following document. If you are not able to find the title then use a appriopriate summary title "
-            f"Respond with ONLY the title and nothing else. "
-            f"\n\nDOCUMENT:\n{chunk}"
+
+        summary = self.title_extractor(
+            chunk,
+            max_length=20,
+            min_length=5,
+            do_sample=True,      
+            top_k=50,            
+            top_p=0.95,          
+            temperature=0.1
         )
 
-        chunk_title = self.llm.complete(prompt)
-        time.sleep(5)
+        context = summary[0]['summary_text']
 
-        return chunk_title
+
+        print(f'Context found: {context} \n')
+
+        return context
 
 
     def ingest_documents(self):
@@ -81,19 +89,28 @@ class SGRagModel:
         pipeline = IngestionPipeline(transformations=[text_splitter])
         nodes = pipeline.run(documents=documents)
 
-        document_nodes = [
-            Document(text="Chunk title: "+self.contextual_chunking(node.text,node.metadata)+"\n"+ "Chunk Information: "+node.text,
-                     metadata=node.metadata,
-                     id_=hashlib.sha256(node.text.encode()).hexdigest()) 
-            for node in nodes
-        ]
+        chunk_titles = []
+        document_nodes = []
+
+        for node in nodes:
+            chunk_title = self.contextual_chunking(node.text, node.metadata)
+            
+            chunk_titles.append(chunk_title)
+            
+            document = Document(
+                text="Chunk title: " + chunk_title + "\n" + "Chunk Information: " + node.text,
+                metadata=node.metadata,
+                id_=hashlib.sha256(node.text.encode()).hexdigest()
+            )
+            
+            document_nodes.append(document)
 
         self.index = VectorStoreIndex.from_documents(document_nodes, storage_context=self.storage_context, embed_model=self.embedding)
     
 
         
         print(f"File '{self.data}' successfully ingested into ChromaDB.")
-        return nodes
+        return chunk_titles
 
     def generate_id(self, text, file_name, page):
         base_id = f"{file_name}_page_{page}"
@@ -105,7 +122,7 @@ class SGRagModel:
         if not self.index:
             self.index = VectorStoreIndex.from_vector_store(self.vector_store, embed_model=self.embedding)
 
-        retriever = self.index.as_retriever(similarity_top_k=5) 
+        retriever = self.index.as_retriever(similarity_top_k=2) 
         results = retriever.retrieve(query)
 
         return results
@@ -117,36 +134,48 @@ class SGRagModel:
             print(c.metadata)
             print("\n")
 
-    def answer(self,context,query):
-        context_text = "\n".join(node.text for node in context)
-        prompt = f"Context: {context_text}\n\n Query: {query}"
-        return self.llm.complete(prompt)
+
+def save_topics(topics,file):
+    topics_path = data_path.split("/")[1]  
+
+    save_dir = "test_data"
+    os.makedirs(save_dir, exist_ok=True)
+
+    file_path = os.path.join(save_dir, f"{topics_path}.txt")
+
+    with open(file_path, "w") as file:
+        for topic in topics:
+            file.write(f"{topic}\n")
+
+    print(f"Topics saved to {file_path}")
+
+    
 
 
-class HuggingFaceQALLM():
-    def __init__(self, model_name="distilbert/distilbert-base-cased-distilled-squad", max_length=512):
-        self.qa_pipeline = pipeline("question-answering", model=model_name)
+# class HuggingFaceQALLM():
+#     def __init__(self, model_name="distilbert/distilbert-base-cased-distilled-squad", max_length=512):
+#         self.qa_pipeline = pipeline("question-answering", model=model_name)
 
-    def complete(self, prompt):
-        context, question = prompt.split("\n\n", 1)
-        response = self.qa_pipeline(question=question, context=context)
-        return response["answer"]
+#     def complete(self, prompt):
+#         context, question = prompt.split("\n\n", 1)
+#         response = self.qa_pipeline(question=question, context=context)
+#         return response["answer"]
 
-class GeminiLLM:
-    def __init__(self, model_name="gemini-2.0-flash"):
+# class GeminiLLM:
+#     def __init__(self, model_name="gemini-2.0-flash"):
 
-        self.api_key = os.getenv("GEMINI_API_KEY")  
-        self.client = genai.Client(api_key=self.api_key)
-        self.model = model_name
+#         self.api_key = os.getenv("GEMINI_API_KEY")  
+#         self.client = genai.Client(api_key=self.api_key)
+#         self.model = model_name
         
 
-    def complete(self,prompt):
+#     def complete(self,prompt):
 
-        response = self.client.models.generate_content(
-        model=self.model ,contents=prompt
-        )
+#         response = self.client.models.generate_content(
+#         model=self.model ,contents=prompt
+#         )
 
-        return response.text if response else "No response from Gemini."
+#         return response.text if response else "No response from Gemini."
     
 
 if __name__ == "__main__":
@@ -157,18 +186,25 @@ if __name__ == "__main__":
     collection = "document_store"
 
     # llm_model = HuggingFaceQALLM()
-    llm_model = GeminiLLM(gemini_model)
+    # llm_model = GeminiLLM(gemini_model)
 
     embedding_model = HuggingFaceEmbedding(model_name=hugging_embedding)
 
-    rag = SGRagModel(llm_model, embedding_model, data_path, collection)
-    rag.ingest_documents()
+    rag = SGRagModel(embedding_model, data_path, collection)
+    topics = rag.ingest_documents()
+
+    if topics:
+        save_topics(topics,data_path)
+
+
 
     test_query = "What are the regression measurements?"
     context = rag.retrieve(test_query)
 
     context_display = rag.show_context(context)
-    response = rag.answer(context,test_query)
-    print(response)
+    print(context_display)
+    # print(topics)
 
     del rag
+
+    
