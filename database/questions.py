@@ -14,8 +14,8 @@ def add_one_question():
     '''
         Sample data:
             { 
-                "challenge_id":"c5618f8d-06cb-43b9-8739-9bc325f2dfe5",
-                "question_no":"3",
+                "challenge_id":"8c5ab830-1708-47c0-9a72-60ff07df6cef",
+                "question_no":"1",
                 "question":{
                     "question": "What is 4+3",
                     "type": "multi-select",
@@ -26,7 +26,7 @@ def add_one_question():
             }
         Returns:
         {
-            "Message": "Question No 3 for challenge_id c5618f8d-06cb-43b9-8739-9bc325f2dfe5 added successfully!",
+            "Message": "Question No 1 for challenge_id 8c5ab830-1708-47c0-9a72-60ff07df6cef added successfully!",
         }
     '''
     
@@ -80,7 +80,7 @@ def get_all_questions_for_challenge():
                     "type": "multi-select",
                     "options": [],
                     },
-                "question_no": 3
+                "question_no": 1
             }
         ]
 
@@ -112,17 +112,21 @@ def get_all_questions_for_challenge_recent_attempt(challenge_id):
     Place challenge_id in URL instead.
 
     Returns:
-    [
-        {
-            "answer": null,
-            "correct": null,
-            "explanation": null,
-            "input": null,
-            "question": null,
-            "question_no": 1,
-            "question_score": 3
-        }
-    ]
+        [
+            {
+                "answer": "7",
+                "correct": null,
+                "explanation": null,
+                "input": null,
+                "question": {
+                    "options": [],
+                    "question": "What is 4+3",
+                    "type": "multi-select"
+                },
+                "question_no": 1,
+                "question_score": 0
+            }
+        ]
 
     """
     
@@ -148,12 +152,11 @@ def update_one_question():
 
         Sample data:
         { 
-            "challenge_id":"c5618f8d-06cb-43b9-8739-9bc325f2dfe5",
-            "question_no":"3",
+            "question_id":"dab350e4-94b7-4930-884b-7f777bbe2c03",
             "input":"21",
             "explanation":"4+3 is 7 u kinda stupid",
             "correct":"False",
-            "question_score":0
+            "question_score":4
         }
         Returns:
         {
@@ -162,13 +165,12 @@ def update_one_question():
     '''
     
     #Validation
-    required_fields={'challenge_id','question_no','input','explanation','correct','question_score'}
+    required_fields={'question_id','input','explanation','correct','question_score'}
     if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing challenge_id, question_no, input, explanation, correct or question_score.'}),400
+        return jsonify({'Error':'Missing question_id, input, explanation, correct or question_score.'}),400
     #End
     
-    challenge_id = data['challenge_id']
-    question_no = data['question_no']
+    question_id = data["question_id"]
     input = data['input']
     explanation = data['explanation']
     correct = data['correct']
@@ -183,14 +185,13 @@ def update_one_question():
     try:
         response = (supabase.table('questions')
                     .update(update_data)
-                    .eq('challenge_id',challenge_id)
-                    .eq('question_no',question_no)
+                    .eq('question_id',question_id)
                     .execute())
         print(response)
         if response.data is not None:
-            return jsonify({"Message":f'Question No {question_no} for challenge_id {challenge_id} updated successfully!',}),201
+            return jsonify({"Message":f'Question ID {question_id} updated successfully!',}),201
         else: 
-            return jsonify({"Error": f'Question No {question_no} not updated...'}),500
+            return jsonify({"Error": f'Question ID {question_id} not updated...'}),500
         
     except Exception as e:
         return jsonify({"Error":str(e)}),500

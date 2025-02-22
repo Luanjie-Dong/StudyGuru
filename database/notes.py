@@ -9,38 +9,38 @@ app = Flask(__name__)
 CORS(app)
 
 @app.route("/notes", methods=['GET'])
-def get_all_notes_for_course():
+def get_all_notes_for_module():
     data = request.get_json()
     """
         Sample data:
         {
-            "userid":"502a0caa-8812-424f-9490-eb73f2722ac0",
-            "course_name":"ESD"
+            "module_id":"a6efb5ac-c0aa-4b81-8541-cfea248f786a"
         }
         Returns:
         [
             {
                 "embedding": null,
-                "pdf_URL": "www.google.com"
+                "module_id": "a6efb5ac-c0aa-4b81-8541-cfea248f786a",
+                "note_id": "71364235-5489-4d10-aa4f-0c10fc403067",
+                "pdf_URL": "www.yahoo.com"
             }
         ]
     """
-    if not data or 'userid' not in data or 'course_name' not in data:
-        return jsonify({'Error':'Missing userid or course_name'}),400
+    if not data or 'module_id' not in data:
+        return jsonify({'Error':'Missing module_id!'}),400
     
-    userid = data['userid']
-    course_name = data['course_name']
+    module_id = data['module_id']
+    
     try:
         response = (
             supabase.table('notes')
-            .select('pdf_URL','embedding')
-            .eq('userid',userid)
-            .eq('course_name',course_name)
+            .select('*')
+            .eq('module_id',module_id)
             .execute())
         if response.data:
             return jsonify(response.data),200
         else:
-            return jsonify({'Error':"User has no notes!"}),404
+            return jsonify({'Error':f"Module {module_id} has no notes!"}),404
     except Exception as e:
         return jsonify({"Error":str(e)}),500
     
@@ -51,32 +51,32 @@ def add_one_note():
     '''
         Sample data:
         { 
-            "userid":"502a0caa-8812-424f-9490-eb73f2722ac0",
-            "course_name":"ESD",
+            "module_id":"a6efb5ac-c0aa-4b81-8541-cfea248f786a",
             "pdf_URL":"www.yahoo.com"
         }
         Returns:
         {
-            "Message": "Note added successfully!"
+            "Message": "Note added successfully!",
+            "note_id": "71364235-5489-4d10-aa4f-0c10fc403067"
         }
     '''
     
     #Validation
-    required_fields = {'userid', 'course_name', 'pdf_URL'}
+    required_fields = {'module_id', 'pdf_URL'}
     if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing userid, course_name or pdf_URL'}),400
+        return jsonify({'Error':'Missing module_id or pdf_URL!'}),400
     #End
     
-    userid = data['userid']
-    course_name = data['course_name']
+    module_id = data['module_id']
     pdf_URL = data['pdf_URL']
-    insert_data = {"userid":userid, "course_name":course_name, "pdf_URL":pdf_URL} #MISSING EMBEDDINGS FOR NOW
+    insert_data = {"module_id":module_id, "pdf_URL":pdf_URL} #MISSING EMBEDDINGS FOR NOW
 
     try:
         response = supabase.table('notes').insert(insert_data).execute()
         print(response)
         if response.data is not None:
-            return jsonify({"Message":'Note added successfully!'}),201
+            return jsonify({"Message":'Note added successfully!',
+                            "note_id":response.data[0]['note_id']}),201
         else: 
             return jsonify({"Error": 'Note not added...'}),500
         
@@ -90,9 +90,7 @@ def delete_one_note():
     '''
         Sample data:
         { 
-            "userid":"502a0caa-8812-424f-9490-eb73f2722ac0",
-            "course_name":"ESD",
-            "pdf_URL":"www.yahoo.com"
+            "note_id":"71364235-5489-4d10-aa4f-0c10fc403067"
         }
         Returns:
         {
@@ -101,27 +99,23 @@ def delete_one_note():
     '''
     
     #Validation
-    required_fields = {'userid', 'course_name', 'pdf_URL'}
+    required_fields = {'note_id'}
     if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing userid, course_name or pdf_URL'}),400
+        return jsonify({'Error':'Missing note_id!'}),400
     #End
     
-    userid = data['userid']
-    course_name = data['course_name']
-    pdf_URL = data['pdf_URL']
+    note_id = data['note_id']
 
     try:
         response = (supabase.table('notes')
                     .delete()
-                    .eq('userid',userid)
-                    .eq('course_name',course_name)
-                    .eq('pdf_URL',pdf_URL)
+                    .eq('note_id',note_id)
                     .execute())
         print(response.data)
         if response.data!=[]:
-            return jsonify({"Message":'Note deleted successfully!'}),201
+            return jsonify({"Message":f'Note {note_id} deleted successfully!'}),201
         else: 
-            return jsonify({"Error": 'Note not found!'}),404
+            return jsonify({"Error": f'Note {note_id} not found!'}),404
         
     except Exception as e:
         return jsonify({"Error":str(e)}),500

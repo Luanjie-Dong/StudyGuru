@@ -14,31 +14,29 @@ def get_all_challenges_for_course():
     """
         Sample data:
         {
-            "userid":"502a0caa-8812-424f-9490-eb73f2722ac0",
-            "course_name":"ESD"
+            "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2"
         }
         Returns:
         [
             {
-                "challenge_id": "4e087bbd-765b-4802-b1f0-621f0c20b19f",
-                "course_name": "ESD",
-                "date": "2025-02-18T02:40:59+00:00",
-                "challenge_score": 7,
-                "type": "Daily"
+                "challenge_id": "8c5ab830-1708-47c0-9a72-60ff07df6cef",
+                "challenge_score": 0,
+                "course_id": "d14c272a-e38d-4cfb-b952-e2617029a2d2",
+                "date": "2025-02-22T08:50:45.155366+00:00",
+                "type": "Normal"
             }
         ]
     """
-    if not data or 'userid' not in data or 'course_name' not in data:
-        return jsonify({'Error':'Missing userid or course_name'}),400
+    if not data or 'course_id' not in data:
+        return jsonify({'Error':'Missing course_id!'}),400
     
-    userid = data['userid']
-    course_name = data['course_name']
+    course_id = data['course_id']
+
     try:
         response = (
             supabase.table('challenge')
-            .select('course_name','challenge_id','type','challenge_score','date')
-            .eq('userid',userid)
-            .eq('course_name',course_name)
+            .select('*')
+            .eq('course_id',course_id)
             .execute())
         if response.data:
             return jsonify(response.data),200
@@ -74,40 +72,32 @@ def get_one_challenge_score(challenge_id):
         return jsonify({"Error":str(e)}),500
     
 
-if __name__=='__main__':
-    print("This is flask for " + os.path.basename(__file__) + ": questions ...")
-    app.run(debug=True)
-    
-
 
 @app.route("/challenge", methods=['POST'])
 def add_one_challenge():
     data = request.get_json()
     '''
-    Returns challenge_id for respective question adding.
         Sample data:
         { 
-            "userid":"502a0caa-8812-424f-9490-eb73f2722ac0",
-            "course_name":"ESM",
+            "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2",
             "type":"Normal"
         }
         Returns:
         {
             "Message": "Challenge added successfully!",
-            "challenge_id": "678f29a2-e7f2-42cb-b84d-bb9a12765e95"
+            "challenge_id": "8c5ab830-1708-47c0-9a72-60ff07df6cef"
         }
     '''
     
     #Validation
-    required_fields={'userid','course_name','type'}
+    required_fields={'course_id','type'}
     if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing userid, course_name or type'}),400
+        return jsonify({'Error':'Missing course_id or type!'}),400
     #End
     
-    userid = data['userid']
-    course_name = data['course_name']
+    course_id = data['course_id']
     type = data['type']
-    insert_data = {"userid":userid, "course_name":course_name, "type":type}
+    insert_data = {"course_id":course_id, "type":type}
 
     try:
         response = supabase.table('challenge').insert(insert_data).execute()
@@ -120,10 +110,45 @@ def add_one_challenge():
         
     except Exception as e:
         return jsonify({"Error":str(e)}),500
-
     
+@app.route("/challenge", methods=['PUT'])
+def update_endtime():
+    data = request.get_json()
+    '''
+        Sample data:
+        { 
+            "challenge_id":"8c5ab830-1708-47c0-9a72-60ff07df6cef"
+        }
+        Returns:
+
+    '''
+    
+    #Validation
+    required_fields={"challenge_id"}
+    if not data or not all(field in data for field in required_fields):
+        return jsonify({'Error':'Missing challenge_id!'}),400
+    #End
+    
+    challenge_id = data['challenge_id']
+    update_data = {
+        "end_datetime":"now()"
+        }
+
+    try:
+        response = (supabase.table('challenge')
+                    .update(update_data)
+                    .eq('challenge_id',challenge_id)
+                    .execute())
+        print(response)
+        if response.data is not None:
+            return jsonify({"Message":f'Challenge ID {challenge_id} endtime updated successfully!',}),201
+        else: 
+            return jsonify({"Error": f'Challenge ID {challenge_id} endtime not updated...'}),500
+        
+    except Exception as e:
+        return jsonify({"Error":str(e)}),500
     
 
 if __name__=='__main__':
-    print("This is flask for " + os.path.basename(__file__) + ": challenge ...")
+    print("This is flask for " + os.path.basename(__file__))
     app.run(debug=True)
