@@ -9,21 +9,24 @@ app = Flask(__name__)
 CORS(app)
 
 @app.route("/questions", methods=['POST'])
-def add_one_question():
+def add_questions():
     data = request.get_json()
     '''
+    BULK insert questions. If any of the insertion fails, none of the questions will be inserted.
+    Format: List of JSON questions.
+
         Sample data:
-            { 
+            [{ 
                 "challenge_id":"8c5ab830-1708-47c0-9a72-60ff07df6cef",
                 "question_no":"1",
                 "question":{
                     "question": "What is 4+3",
                     "type": "multi-select",
-                    "options": []
+                    "options": [1,2,3,7]
                     },
                 "answer":"7",
                 "hint":"Addition"
-            }
+            }]
         Returns:
         {
             "Message": "Question No 1 for challenge_id 8c5ab830-1708-47c0-9a72-60ff07df6cef added successfully!",
@@ -31,30 +34,28 @@ def add_one_question():
     '''
     
     #Validation
+    if not isinstance(data, list):
+        return jsonify({'Error': 'Input must be a list of questions'}), 400
+    
     required_fields={'challenge_id','question_no','question','answer','hint'}
-    if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing challenge_id, question_no, question, answer, or hint.'}),400
+    required_question_fields={'question','type','options'}
+
+    for question_data in data:
+        if not isinstance(question_data,dict) or not all(field in question_data for field in required_fields):
+            return jsonify({'Error':'Missing challenge_id, question_no, question, answer, or hint.'}),400
+        if not isinstance(question_data['question'],dict) or not all(field in question_data['question'] for field in required_question_fields):
+            return jsonify({"Error:":f'Question object must contain {",".join(required_question_fields)}'}),400
     #End
     
-    challenge_id = data['challenge_id']
-    question_no = data['question_no']
-    question = data['question']
-    answer = data['answer']
-    hint = data['hint']
-    insert_data = {
-        "challenge_id":challenge_id,
-        "question_no":question_no,
-        "question":question,
-        "answer":answer,
-        "hint":hint}
+    insert_data = data
 
     try:
         response = supabase.table('questions').insert(insert_data).execute()
         print(response)
         if response.data is not None:
-            return jsonify({"Message":f'Question No {question_no} for challenge_id {challenge_id} added successfully!',}),201
+            return jsonify({"Message":f'All {len(data)} questions added successfully!',}),201
         else: 
-            return jsonify({"Error": f'Question No {question_no} not added...'}),500
+            return jsonify({"Error": 'Questions not added...'}),500
         
     except Exception as e:
         return jsonify({"Error":str(e)}),500
