@@ -8,6 +8,39 @@ app = Flask(__name__)
 
 CORS(app)
 
+@app.route('/users', methods=['POST'])
+def add_one_user():
+    """
+    Sample Data:
+    {
+        "firebase_uid":"c6dd5e2b-9c1d-4109-8ba3-3e246c9ec813"
+    }
+
+    Returns:
+    {
+        "Message:": "User c6dd5e2b-9c1d-4109-8ba3-3e246c9ec813 added!",
+        "userid": "c6dd5e2b-9c1d-4109-8ba3-3e246c9ec813"
+    }
+    """
+    data=request.get_json()
+    required_fields={'firebase_uid'}
+    if not data or not all(field in data for field in required_fields):
+        return jsonify({'Error':'Missing firebase_uid.'}),400
+    
+    firebase_uid=data['firebase_uid']
+
+    try:
+        response=supabase.table('users').insert({"userid":firebase_uid}).execute()
+        if response.data:
+            return jsonify({"Message:":f"User {firebase_uid} added!",
+                            "userid":response.data[0]['userid']}),201
+        else:
+            return jsonify({"Error": f'User not added...'}),500
+        
+    except Exception as e:
+        return jsonify({"Error":str(e)}),500
+
+
 @app.route("/users", methods=['GET'])
 def get_one_user_info():
     data = request.get_json()
