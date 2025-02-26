@@ -44,16 +44,16 @@
         </dependency>
 
         <!-- Spring Boot Data JPA -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
+        </dependency> -->
 
         <!-- PostgreSQL (Supabase uses Postgres) -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-        </dependency>
+        </dependency> -->
 
         <!-- Scheduler for the daily job -->
         <dependency>

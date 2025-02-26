@@ -1,22 +1,22 @@
 package studyguru.backend.models;
 
-import jakarta.persistence.*;
+// import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "checkpoint")
+// @Entity
+// @Table(name = "checkpoint")
 public class Checkpoint {
 
-    @Id
+    // @Id
     private String checkpoint_id;
 
-    @Column(nullable = false)
+    // @Column(nullable = false)
     private String checkpoint_name;
 
-    @Column(nullable = false)
+    // @Column(nullable = false)
     private LocalDateTime checkpoint_date;
 
-    @Column(nullable = false)
+    // @Column(nullable = false)
     private String course_id;
 
     public Checkpoint() {

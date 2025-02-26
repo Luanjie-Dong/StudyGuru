@@ -1,11 +1,11 @@
 package studyguru.backend.models;
 
-import jakarta.persistence.*;
+// import jakarta.persistence.*;
 
-@Entity
-@Table(name="questions")
+// @Entity
+// @Table(name="questions")
 public class Question {
-    @Id
+    // @Id
     private String question_id;
     private String challenge_id;
     private int question_no;

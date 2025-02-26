@@ -23,10 +23,10 @@ public class ChallengeGeneratorService {
     @Value("${llm.microservice.url}")
     private String llmMicroserviceUrl;
 
-    private final CourseService courseService;
-    private final CheckpointService checkpointService;
-    private final ModuleService moduleService;
-    private final RestTemplate restTemplate;
+    private CourseService courseService;
+    private CheckpointService checkpointService;
+    private ModuleService moduleService;
+    private RestTemplate restTemplate;
 
     public ChallengeGeneratorService(CourseService courseService, 
                                      CheckpointService checkpointService, 

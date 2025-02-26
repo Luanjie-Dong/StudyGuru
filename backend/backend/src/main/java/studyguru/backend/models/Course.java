@@ -1,19 +1,19 @@
 package studyguru.backend.models;
 
-import jakarta.persistence.*;
+// import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "course")
+// @Entity
+// @Table(name = "course")
 public class Course {
 
-    @Id
+    // @Id
     private String course_id;
 
-    @Column(nullable = false)
+    // @Column(nullable = false)
     private String userId;
 
-    @Column(nullable = false)
+    // @Column(nullable = false)
     private String course_name;
 
     private int streak;

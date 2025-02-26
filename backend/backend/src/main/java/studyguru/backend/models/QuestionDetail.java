@@ -2,10 +2,10 @@ package studyguru.backend.models;
 
 import java.util.ArrayList;
 
-import jakarta.persistence.Embeddable;
+// import jakarta.persistence.Embeddable;
 import studyguru.backend.enums.QuestionType;
 
-@Embeddable
+// @Embeddable
 public class QuestionDetail {
     private QuestionType question_type;
     private ArrayList<String> options;

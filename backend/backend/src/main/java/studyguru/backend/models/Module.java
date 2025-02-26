@@ -1,18 +1,18 @@
 package studyguru.backend.models;
 
-import jakarta.persistence.*;
+// import jakarta.persistence.*;
 
-@Entity
-@Table(name = "modules")
+// @Entity
+// @Table(name = "modules")
 public class Module {
     
-    @Id
+    // @Id
     private String module_id;
 
-    @Column(nullable = false)
+    // @Column(nullable = false)
     private String module_name;
 
-    @Column(nullable = false)
+    // @Column(nullable = false)
     private String course_id;
 
     public Module() {
