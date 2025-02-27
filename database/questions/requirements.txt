@@ -1,0 +1,5 @@
+supabase==2.13.0
+supafunc==0.9.3
+flasgger==0.9.7.1
+Flask==3.1.0
+Flask-Cors==4.0.1

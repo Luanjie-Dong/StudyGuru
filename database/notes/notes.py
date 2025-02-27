@@ -41,6 +41,39 @@ def get_all_notes_for_module():
     except Exception as e:
         return jsonify({"Error":str(e)}),500
     
+@app.route("/one_note", methods=['GET'])
+def get_one_note_by_id():
+    """
+        PARAMS:
+        note_id:56cbeee4-d746-4927-8999-70df8b6d0723
+        
+        Returns:
+        [
+            {
+                "module_id": "06ba3cc9-c8e5-4294-8e78-21cc6c7097d4",
+                "note_id": "56cbeee4-d746-4927-8999-70df8b6d0723",
+                "pdf_URL": "https://lulvcodujqpxgvhkzyfc.supabase.co/storage/v1/object/public/notes/06ba3cc9-c8e5-4294-8e78-21cc6c7097d4/COGS_PwC_Case_Comp_Slidedeck.pdf?"
+            }
+        ]
+    """
+    
+    note_id = request.args.get('note_id')
+    if not note_id:
+        return jsonify({'Error':'Missing note_id!'}),400
+    
+    try:
+        response = (
+            supabase.table('notes')
+            .select('*')
+            .eq('note_id',note_id)
+            .execute())
+        if response.data:
+            return jsonify(response.data),200
+        else:
+            return jsonify({'Error':f"Note {note_id} not found!"}),404
+    except Exception as e:
+        return jsonify({"Error":str(e)}),500
+    
 
 @app.route("/notes", methods=['POST'])
 def add_one_note():

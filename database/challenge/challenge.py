@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+import os
 from supabaseClient import supabase
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import os
 
 app = Flask(__name__)
 
