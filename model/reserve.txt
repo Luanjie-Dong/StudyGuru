@@ -1,0 +1,14 @@
+pdf2image
+pytesseract
+PyPDF2
+pymupdf
+python-pptx
+Pillow
+llama-index
+llama-index-embeddings-huggingface
+llama-index-vector_stores-chroma
+chromadb
+python-dotenv
+transformers
+google-genai
+torch

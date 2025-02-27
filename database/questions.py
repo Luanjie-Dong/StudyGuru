@@ -19,7 +19,7 @@ def add_questions():
             [{ 
                 "challenge_id":"8c5ab830-1708-47c0-9a72-60ff07df6cef",
                 "question_no":"1",
-                "question":{
+                "question_detail":{
                     "question": "What is 4+3",
                     "type": "multi-select",
                     "options": [1,2,3,7]
@@ -37,13 +37,13 @@ def add_questions():
     if not isinstance(data, list):
         return jsonify({'Error': 'Input must be a list of questions'}), 400
     
-    required_fields={'challenge_id','question_no','question','answer','hint'}
+    required_fields={'challenge_id','question_no','question_detail','answer','hint'}
     required_question_fields={'question','type','options'}
 
     for question_data in data:
         if not isinstance(question_data,dict) or not all(field in question_data for field in required_fields):
-            return jsonify({'Error':'Missing challenge_id, question_no, question, answer, or hint.'}),400
-        if not isinstance(question_data['question'],dict) or not all(field in question_data['question'] for field in required_question_fields):
+            return jsonify({'Error':'Missing challenge_id, question_no, question_detail, answer, or hint.'}),400
+        if not isinstance(question_data['question_detail'],dict) or not all(field in question_data['question_detail'] for field in required_question_fields):
             return jsonify({"Error:":f'Question object must contain {",".join(required_question_fields)}'}),400
     #End
     
@@ -76,10 +76,10 @@ def get_all_questions_for_challenge():
             {
                 "answer": "7",
                 "hint": "Addition",
-                "question":{
+                "question_detail":{
                     "question": "What is 4+3",
                     "type": "multi-select",
-                    "options": [],
+                    "options": [1,2,3,7],
                     },
                 "question_no": 1
             }
@@ -94,7 +94,7 @@ def get_all_questions_for_challenge():
     try:
         response = (
             supabase.table('questions')
-            .select('question_no','question','answer','hint')
+            .select('question_no','question_detail','answer','hint')
             .eq('challenge_id',challenge_id)
             .execute())
         if response.data:
@@ -119,8 +119,8 @@ def get_all_questions_for_challenge_recent_attempt(challenge_id):
                 "correct": null,
                 "explanation": null,
                 "input": null,
-                "question": {
-                    "options": [],
+                "question_detail": {
+                    "options": [1,2,3,7],
                     "question": "What is 4+3",
                     "type": "multi-select"
                 },
@@ -134,7 +134,7 @@ def get_all_questions_for_challenge_recent_attempt(challenge_id):
     try:
         response = (
             supabase.table('questions')
-            .select('question_no','question','input','answer','explanation','correct','question_score')
+            .select('question_no','question_detail','input','answer','explanation','correct','question_score')
             .eq('challenge_id',challenge_id)
             .execute())
         if response.data:
@@ -189,7 +189,7 @@ def update_one_question():
                     .eq('question_id',question_id)
                     .execute())
         print(response)
-        if response.data is not None:
+        if response.data!=[]:
             return jsonify({"Message":f'Question ID {question_id} updated successfully!',}),201
         else: 
             return jsonify({"Error": f'Question ID {question_id} not updated...'}),500
