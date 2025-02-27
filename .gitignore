@@ -4,3 +4,5 @@ test_data
 chroma_db
 backups
 .DS_Store
+training
+model/training/title_model.ipynb

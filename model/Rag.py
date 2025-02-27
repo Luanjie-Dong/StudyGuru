@@ -1,39 +1,50 @@
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.core import VectorStoreIndex, Document , StorageContext
+from llama_index.core import  Document 
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.text_splitter import SentenceSplitter
-from llama_index.vector_stores.chroma.base import ChromaVectorStore
+from pinecone import Pinecone, ServerlessSpec
+import pinecone
 
-import chromadb
-from Extractor import SGExtractor
+
+from extractor import SGExtractor
 import os
 from dotenv import load_dotenv
 import hashlib
 from transformers import pipeline , AutoTokenizer
-from google import genai
+from sentence_transformers import SentenceTransformer
 import time
 from transformers import pipeline
 
 load_dotenv()
 
-
-
 # StudyGuru Rag Model = SGRagModel
 class SGRagModel:
-    def __init__(self, embedding , data , collection):
+    def __init__(self, embedding_model, module):
+        self.module = module
         
-        self.data = data
-        self.embedding = HuggingFaceEmbedding(model_name=embedding)
+        self.embedding_model = SentenceTransformer(embedding_model)
+        self.dimension = self.embedding_model.get_sentence_embedding_dimension()
+        
         self.chunk_size = 512
         self.chunk_overlap = 100
-        self.db = chromadb.PersistentClient(path="./chroma_db")
-        self.collection_name = collection
+        self.pinecone_api_key = os.getenv("PINECONE_API_KEY") 
+        self.pinecone_env = os.getenv("PINECONE_ENVIRONMENT")  
+        self.pinecone_index_name = f"{module}-index" 
+        self.pc = Pinecone(api_key=self.pinecone_api_key)
 
-        self.chroma_collection = self.db.get_or_create_collection(name=self.collection_name)
-        self.vector_store = ChromaVectorStore(self.chroma_collection)
-        self.index = None 
-        self.storage_context = StorageContext.from_defaults(vector_store=self.vector_store)
+        if self.pinecone_index_name not in self.pc.list_indexes().names():
+            self.pc.create_index(
+                name=self.pinecone_index_name,
+                dimension=self.dimension, 
+                metric="cosine",
+                spec=ServerlessSpec(cloud="aws", region="us-east-1")  
+            )
+        
+        self.pinecone_index = self.pc.Index(self.pinecone_index_name)
+        
         self.title_extractor = pipeline("summarization", model="Falconsai/text_summarization")
+
+    
         
     def process_documents(self,file_path):
         print(f"Processing Documents from {file_path}")
@@ -72,44 +83,48 @@ class SGRagModel:
         return context
 
 
-    def ingest_documents(self):
-        print(f"Checking if this {self.data} has already been processed...")
-
-        existing_data = self.chroma_collection.get(where={"file_name": self.data})  
-
-        if existing_data["ids"]:  
-            print(f"File '{self.data}' already exists in ChromaDB. Skipping processing.")
+    def ingest_documents(self,data):
+        
+        print(f"Checking if this {data} has already been processed...")
+        
+        query_result = self.pinecone_index.query(
+            vector=[0] * 384,  
+            filter={"file_name": {"$eq": data}},
+            top_k=1,
+            include_metadata=True
+        )
+        if query_result['matches']:
+            print(f"File '{data}' already exists in Pinecone. Skipping processing.")
             return
 
         print("No existing records for this file. Processing and storing documents...")
 
-        documents = self.process_documents(self.data)
+        documents = self.process_documents(data)
         text_splitter = SentenceSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
 
         pipeline = IngestionPipeline(transformations=[text_splitter])
         nodes = pipeline.run(documents=documents)
 
         chunk_titles = []
-        document_nodes = []
 
         for node in nodes:
             chunk_title = self.contextual_chunking(node.text, node.metadata)
-            
             chunk_titles.append(chunk_title)
-            
-            document = Document(
-                text="Chunk title: " + chunk_title + "\n" + "Chunk Information: " + node.text,
-                metadata=node.metadata,
-                id_=hashlib.sha256(node.text.encode()).hexdigest()
-            )
-            
-            document_nodes.append(document)
 
-        self.index = VectorStoreIndex.from_documents(document_nodes, storage_context=self.storage_context, embed_model=self.embedding)
-    
+            embedding = self.embedding_model.encode(node.text).tolist()
 
+            doc_id = self.generate_id(node.text, node.metadata["file_name"], node.metadata["page"])
+
+            metadata = {
+                "file_name": node.metadata["file_name"],
+                "page": node.metadata["page"],
+                "chunk_title": chunk_title,
+                "text": node.text
+            }
+
+            self.pinecone_index.upsert([(doc_id, embedding, metadata)])
         
-        print(f"File '{self.data}' successfully ingested into ChromaDB.")
+        print(f"File '{self.data}' successfully ingested into Pinecone.")
         return chunk_titles
 
     def generate_id(self, text, file_name, page):
@@ -119,19 +134,31 @@ class SGRagModel:
         
 
     def retrieve(self, query):
-        if not self.index:
-            self.index = VectorStoreIndex.from_vector_store(self.vector_store, embed_model=self.embedding)
+        query_embedding = self.embedding_model.encode(query).tolist()
 
-        retriever = self.index.as_retriever(similarity_top_k=2) 
-        results = retriever.retrieve(query)
+        results = self.pinecone_index.query(
+            vector=query_embedding,
+            top_k=2,
+            include_metadata=True
+        )
 
-        return results
+        formatted_results = []
+        for match in results['matches']:
+            formatted_results.append({
+                "id": match['id'],
+                "score": match['score'],
+                "metadata": match['metadata'],
+                "text": "Title: "+match['metadata'].get("chunk_title", "") + "\n\n" + match['metadata'].get("text", ""),
+                "page": match['metadata'].get("page","")
+            })
+
+        return formatted_results
 
     def show_context(self,context):
         for i, c in enumerate(context):
             print(f"Context {i+1}:")
-            print(c.text)
-            print(c.metadata)
+            print(c['text'])
+            print(c['page'])
             print("\n")
 
 
@@ -149,48 +176,19 @@ def save_topics(topics,file):
 
     print(f"Topics saved to {file_path}")
 
-    
 
-
-# class HuggingFaceQALLM():
-#     def __init__(self, model_name="distilbert/distilbert-base-cased-distilled-squad", max_length=512):
-#         self.qa_pipeline = pipeline("question-answering", model=model_name)
-
-#     def complete(self, prompt):
-#         context, question = prompt.split("\n\n", 1)
-#         response = self.qa_pipeline(question=question, context=context)
-#         return response["answer"]
-
-# class GeminiLLM:
-#     def __init__(self, model_name="gemini-2.0-flash"):
-
-#         self.api_key = os.getenv("GEMINI_API_KEY")  
-#         self.client = genai.Client(api_key=self.api_key)
-#         self.model = model_name
-        
-
-#     def complete(self,prompt):
-
-#         response = self.client.models.generate_content(
-#         model=self.model ,contents=prompt
-#         )
-
-#         return response.text if response else "No response from Gemini."
     
 
 if __name__ == "__main__":
     data_path = "test_data/test.pdf"
     hugging_llm  = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-    hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
     gemini_model = "gemini-2.0-flash"
-    collection = "document_store"
+    collection = "test-module"
 
-    # llm_model = HuggingFaceQALLM()
-    # llm_model = GeminiLLM(gemini_model)
 
-    embedding_model = HuggingFaceEmbedding(model_name=hugging_embedding)
-
-    rag = SGRagModel(embedding_model, data_path, collection)
+    #embedding_model, data, module
+    rag = SGRagModel(embedding_model, collection)
     topics = rag.ingest_documents()
 
     if topics:

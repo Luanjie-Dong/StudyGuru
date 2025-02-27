@@ -1,20 +1,7 @@
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.core import VectorStoreIndex, Document , StorageContext
-from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.text_splitter import SentenceSplitter
-from llama_index.vector_stores.chroma.base import ChromaVectorStore
-from llama_index.core.embeddings import BaseEmbedding
-
-
-import chromadb
-from Rag import SGRagModel
+from rag import SGRagModel
 import os
 from dotenv import load_dotenv
-import hashlib
-from transformers import pipeline , AutoTokenizer
 from google import genai
-import time
-from transformers import pipeline
 import random
 import json
 
@@ -23,9 +10,9 @@ load_dotenv()
 
 
 class StudyGuru(SGRagModel):
-    def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = None ,data_path: str = "", collection: str = ""):
+    def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = None, collection: str = ""):
 
-        super().__init__(embedding_model, data_path, collection)
+        super().__init__(embedding_model, collection)
 
         self.api_key = os.getenv("GEMINI_API_KEY")  
         self.client = genai.Client(api_key=self.api_key)
@@ -47,10 +34,9 @@ class StudyGuru(SGRagModel):
 
             for i, c in enumerate(context):
 
-                content += c.text +f" extracted from page: {c.metadata['page']}"+ "\n\n"
+                content += c['text'] +f" extracted from page: {c['page']}"+ "\n\n"
                 print(f"Context {i+1}:")
-                print(c.text)
-                print(c.metadata)
+                print(c['text'])
                 print("\n")
 
             
@@ -130,10 +116,10 @@ if __name__ == "__main__":
     hugging_llm  = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     gemini_model = "gemini-2.0-flash"
-    collection = "document_store"
+    collection = "test-module"
 
 
-    model = StudyGuru(num=20,embedding_model=hugging_embedding,data_path=data_path,collection=collection)
+    model = StudyGuru(num=5,embedding_model=hugging_embedding,collection=collection)
 
     topic_path = "test_data/test.pdf.txt"
 
