@@ -19,7 +19,6 @@ def get_all_notes_for_module():
         Returns:
         [
             {
-                "embedding": null,
                 "module_id": "a6efb5ac-c0aa-4b81-8541-cfea248f786a",
                 "note_id": "71364235-5489-4d10-aa4f-0c10fc403067",
                 "pdf_URL": "www.yahoo.com"
@@ -69,7 +68,7 @@ def add_one_note():
     
     module_id = data['module_id']
     pdf_URL = data['pdf_URL']
-    insert_data = {"module_id":module_id, "pdf_URL":pdf_URL} #MISSING EMBEDDINGS FOR NOW
+    insert_data = {"module_id":module_id, "pdf_URL":pdf_URL}
 
     try:
         response = supabase.table('notes').insert(insert_data).execute()
