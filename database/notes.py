@@ -10,12 +10,10 @@ CORS(app)
 
 @app.route("/notes", methods=['GET'])
 def get_all_notes_for_module():
-    data = request.get_json()
     """
-        Sample data:
-        {
-            "module_id":"a6efb5ac-c0aa-4b81-8541-cfea248f786a"
-        }
+        PARAMS:
+        module_id:a6efb5ac-c0aa-4b81-8541-cfea248f786a
+        
         Returns:
         [
             {
@@ -25,10 +23,10 @@ def get_all_notes_for_module():
             }
         ]
     """
-    if not data or 'module_id' not in data:
-        return jsonify({'Error':'Missing module_id!'}),400
     
-    module_id = data['module_id']
+    module_id = request.args.get('module_id')
+    if not module_id:
+        return jsonify({'Error':'Missing module_id!'}),400
     
     try:
         response = (
@@ -85,26 +83,19 @@ def add_one_note():
     
 @app.route("/notes", methods=['DELETE'])
 def delete_one_note():
-    data = request.get_json()
     '''
-        Sample data:
-        { 
-            "note_id":"71364235-5489-4d10-aa4f-0c10fc403067"
-        }
+        PARAMS:
+        note_id:71364235-5489-4d10-aa4f-0c10fc403067
+    
         Returns:
         {
             "Message": "Note deleted successfully!"
         }
     '''
-    
-    #Validation
-    required_fields = {'note_id'}
-    if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing note_id!'}),400
-    #End
-    
-    note_id = data['note_id']
 
+    note_id = request.args.get('note_id')
+    if not note_id:
+        return jsonify({'Error':'Missing note_id!'}),400
     try:
         response = (supabase.table('notes')
                     .delete()

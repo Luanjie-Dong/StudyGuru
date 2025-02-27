@@ -10,12 +10,10 @@ CORS(app)
 
 @app.route("/challenge", methods=['GET'])
 def get_all_challenges_for_course():
-    data = request.get_json()
     """
-        Sample data:
-        {
-            "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2"
-        }
+        PARAMS:
+        course_id:d14c272a-e38d-4cfb-b952-e2617029a2d2
+
         Returns:
         [
             {
@@ -27,10 +25,10 @@ def get_all_challenges_for_course():
             }
         ]
     """
-    if not data or 'course_id' not in data:
+
+    course_id=request.args.get('course_id')
+    if not course_id:
         return jsonify({'Error':'Missing course_id!'}),400
-    
-    course_id = data['course_id']
 
     try:
         response = (
@@ -45,16 +43,27 @@ def get_all_challenges_for_course():
     except Exception as e:
         return jsonify({"Error":str(e)}),500
     
-@app.route("/challenge/<string:challenge_id>", methods=['GET'])
-def get_one_challenge_score(challenge_id):
+@app.route("/challengescore", methods=['GET'])
+def get_one_challenge_score():
     '''
         Gets challenge score by retrieving and aggregating individual question scores from questions table.
         Updating of scores is done automatically, triggered by any update in score from related questions.
         
         NOT TRIGGERED BY INSERTION OF QUESTIONS.
         
-        Place challenge_id in URL instead.
+        PARAMS:
+        challenge_id:8c5ab830-1708-47c0-9a72-60ff07df6cef
+
+        RETURNS:
+        {
+            "Message": "Challenge score retrieved!",
+            "Score": 7
+        }
     '''
+    challenge_id=request.args.get('challenge_id')
+    if not challenge_id:
+        return jsonify({'Error':'Missing challenge_id!'}),400
+    
     try:
         response = (supabase.table('challenge')
                     .select('challenge_score')
@@ -77,7 +86,7 @@ def get_one_challenge_score(challenge_id):
 def add_one_challenge():
     data = request.get_json()
     '''
-        Sample data:
+        Sample request body:
         { 
             "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2",
             "type":"Normal"
@@ -115,7 +124,7 @@ def add_one_challenge():
 def update_endtime():
     data = request.get_json()
     '''
-        Sample data:
+        Sample request body:
         { 
             "challenge_id":"8c5ab830-1708-47c0-9a72-60ff07df6cef"
         }

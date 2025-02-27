@@ -8,14 +8,12 @@ app = Flask(__name__)
 
 CORS(app)
 
-@app.route("/checkpoint", methods=['GET'])
+@app.route("/course_checkpoint", methods=['GET'])
 def get_all_checkpoints_for_course():
-    data = request.get_json()
     """
-        Sample data:
-        {
-            "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2"
-        }
+        PARAMS:
+        course_id:d14c272a-e38d-4cfb-b952-e2617029a2d2
+
         Returns:
         [
             {
@@ -26,11 +24,11 @@ def get_all_checkpoints_for_course():
             }
         ]
     """
-    if not data or 'course_id' not in data:
+    
+    course_id = request.args.get('course_id')
+    if not course_id:
         return jsonify({'Error':'Missing course_id'}),400
     
-    course_id = data['course_id']
-
     try:
         response = (
             supabase.table('checkpoint')
@@ -44,12 +42,50 @@ def get_all_checkpoints_for_course():
     except Exception as e:
         return jsonify({"Error":str(e)}),500
     
+@app.route("/checkpoint_date", methods=['GET'])
+def get_all_checkpoints_by_date():
+    """
+        PARAMS:
+        date:2025-02-27
+
+        Returns:
+        [
+            {
+                "checkpoint_date": "2025-03-13T00:00:00+00:00",
+                "checkpoint_id": "719ed46d-8b2e-4d4f-a10b-eec5280a05c5",
+                "checkpoint_name": "Quiz 1",
+                "course_id": "d14c272a-e38d-4cfb-b952-e2617029a2d2"
+            }
+        ]
+    """
+    
+    date = request.args.get('date')
+    if not date:
+        return jsonify({'Error':'Missing date!'}),400
+    start_date = f"{date}T00:00:00+00:00"
+    end_date = f"{date}T23:59:59+00:00"
+    
+    try:
+        response = (
+            supabase.table('checkpoint')
+            .select('*')
+            .gte('checkpoint_date',start_date)
+            .lte('checkpoint_date',end_date)
+            .execute())
+        print(response.data)
+        if response.data:
+            return jsonify(response.data),200
+        else:
+            return jsonify({'Error':f"No checkpoint for date:{date}"}),404
+    except Exception as e:
+        return jsonify({"Error":str(e)}),500
+    
 
 @app.route("/checkpoint", methods=['POST'])
 def add_one_checkpoint():
     data = request.get_json()
     '''
-        Sample data:
+        Sample request body:
         { 
             "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2",
             "checkpoint_name":"Quiz 1",
@@ -86,25 +122,19 @@ def add_one_checkpoint():
 
 @app.route("/checkpoint", methods=['DELETE'])
 def delete_one_test():
-    data = request.get_json()
     '''
-        Sample data:
-        { 
-            "checkpoint_id":"719ed46d-8b2e-4d4f-a10b-eec5280a05c5"
-        }
+        PARAMS: 
+        checkpoint_id:719ed46d-8b2e-4d4f-a10b-eec5280a05c5
+
         Returns:
         {
             "Message": "Checkpoint deleted successfully!"
         }
     '''
-    
-    #Validation
-    required_fields = {'checkpoint_id'}
-    if not data or not all(field in data for field in required_fields):
+
+    checkpoint_id = request.args.get('checkpoint_id')
+    if not checkpoint_id:
         return jsonify({'Error':'Missing checkpoint_id!'}),400
-    #End
-    
-    checkpoint_id = data['checkpoint_id']
 
     try:
         response = (supabase.table('checkpoint')

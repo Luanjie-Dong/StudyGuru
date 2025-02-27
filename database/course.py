@@ -10,12 +10,10 @@ CORS(app)
 
 @app.route("/course", methods=['GET'])
 def get_all_courses():
-    data = request.get_json()
     """
-        Sample data:
-        {
-            "userid":"502a0caa-8812-424f-9490-eb73f2722ac0"
-        }
+        PARAMS:
+        userid:502a0caa-8812-424f-9490-eb73f2722ac0
+    
         Returns:
         {
             "course_id": "d14c272a-e38d-4cfb-b952-e2617029a2d2",
@@ -25,10 +23,11 @@ def get_all_courses():
             "userid": "502a0caa-8812-424f-9490-eb73f2722ac0"
         }
     """
-    if not data or 'userid' not in data:
+
+    userid = request.args.get('userid')
+    if not userid:
         return jsonify({'Error':'Missing userid'}),400
     
-    userid = data['userid']
     try:
         response = (
             supabase.table('course')
@@ -80,25 +79,20 @@ def add_one_course():
     
 @app.route("/course", methods=['DELETE'])
 def delete_one_course():
-    data = request.get_json()
     '''
-        Sample data:
-        { 
-            "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2"
-        }
+        PARAMS:
+        course_id:d14c272a-e38d-4cfb-b952-e2617029a2d2
+
         Returns:
         {
             "Message": "Course deleted successfully!"
         }
     '''
-    
-    #Validation
-    if not data or 'course_id' not in data:
-        return jsonify({'Error':'Missing course_id'}),400
-    #End
-    
-    course_id = data['course_id']
 
+    course_id = request.args.get('course_id')
+    if not course_id:
+        return jsonify({'Error':'Missing course_id'}),400
+    
     try:
         response = (supabase.table('course')
                     .delete()

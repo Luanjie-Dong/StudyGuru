@@ -63,14 +63,12 @@ def add_questions():
 
 @app.route("/questions", methods=['GET'])
 def get_all_questions_for_challenge():
-    data = request.get_json()
     """
     Used for first time viewing of questions or during a replay. (Actual replaying, not view past attempts.)
 
-        Sample data:
-        {
-            "challenge_id":"c5618f8d-06cb-43b9-8739-9bc325f2dfe5"
-        }
+        PARAMS:
+        challenge_id:c5618f8d-06cb-43b9-8739-9bc325f2dfe5
+        
         Returns:
         [
             {
@@ -86,11 +84,11 @@ def get_all_questions_for_challenge():
         ]
 
     """
-    if not data or 'challenge_id' not in data:
+
+    challenge_id = request.args.get('challenge_id')
+    if not challenge_id:
         return jsonify({'Error':'Missing challenge_id'}),400
-    
-    challenge_id = data['challenge_id']
-    
+
     try:
         response = (
             supabase.table('questions')
@@ -105,12 +103,13 @@ def get_all_questions_for_challenge():
         return jsonify({"Error":str(e)}),500
     
 
-@app.route("/questions/<string:challenge_id>", methods=['GET'])
-def get_all_questions_for_challenge_recent_attempt(challenge_id):
+@app.route("/questions_attempt", methods=['GET'])
+def get_all_questions_for_challenge_recent_attempt():
     """
     Used to view most recent attempt of challenge.
-
-    Place challenge_id in URL instead.
+    
+    PARAMS:
+    challenge_id:80a31e9d-bf30-4d5d-8bdd-f27d0c69c73e
 
     Returns:
         [
@@ -130,6 +129,9 @@ def get_all_questions_for_challenge_recent_attempt(challenge_id):
         ]
 
     """
+    challenge_id=request.args.get('challenge_id')
+    if not challenge_id:
+        return jsonify({'Error':'Missing challenge_id'}),400
     
     try:
         response = (

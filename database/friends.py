@@ -10,12 +10,10 @@ CORS(app)
 
 @app.route("/friends", methods=['GET'])
 def get_all_friends():
-    data = request.get_json()
     '''
-        Sample data:
-        { 
-            "userid":"502a0caa-8812-424f-9490-eb73f2722ac0"
-        }
+        PARAMS:
+        userid:502a0caa-8812-424f-9490-eb73f2722ac0
+
         Returns:
         [
             {
@@ -23,11 +21,11 @@ def get_all_friends():
             }
         ]
     '''
-    #Validation
-    if not data or 'userid' not in data:
+    
+    userid = request.args.get('userid')
+    if not userid:
         return jsonify({'Error':'Missing userid'}),400
-    #End
-    userid = data['userid']
+    
     try:
         response = (
             supabase.table('friends')

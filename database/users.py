@@ -43,12 +43,10 @@ def add_one_user():
 
 @app.route("/users", methods=['GET'])
 def get_one_user_info():
-    data = request.get_json()
     """
-        Sample Data:
-            {
-                "userid":"c6dd5e2b-9c1d-4109-8ba3-3e246c9ec815"
-            }
+        PARAMS:
+        userid:c6dd5e2b-9c1d-4109-8ba3-3e246c9ec815
+            
         Returns:
         [
             {
@@ -61,10 +59,10 @@ def get_one_user_info():
             }
         ]
     """
-    if not data or 'userid' not in data:
-        return jsonify({'Error':'Missing userid.'}),400
     
-    userid = data['userid']
+    userid = request.args.get('userid')
+    if not userid:
+        return jsonify({'Error':'Missing userid.'}),400
     try:
         response = (
             supabase.table('users')

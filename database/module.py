@@ -10,12 +10,10 @@ CORS(app)
 
 @app.route("/module", methods=['GET'])
 def get_all_modules():
-    data = request.get_json()
     """
-        Sample data:
-        {
-            "course_id":"502a0caa-8812-424f-9490-eb73f2722ac0"
-        }
+        PARAMS:
+        course_id:502a0caa-8812-424f-9490-eb73f2722ac0
+    
         Returns:
         [
             {
@@ -25,11 +23,11 @@ def get_all_modules():
             }
         ]
     """
-    if not data or 'course_id' not in data:
+    
+    course_id = request.args.get('course_id')
+    if not course_id:
         return jsonify({'Error':'Missing course_id'}),400
     
-    course_id = data['course_id']
-
     try:
         response = (
             supabase.table('module')
@@ -82,44 +80,7 @@ def add_one_module():
     except Exception as e:
         return jsonify({"Error":str(e)}),500
     
-    
-@app.route("/module", methods=['DELETE'])
-def delete_one_module():
-    data = request.get_json()
-    '''
-        Sample data:
-        { 
-            "module_id":"6daed838-26af-47dc-8354-6ba7a7a4810a"
-        }
-        Returns:
-        {
-            "Message": "Module deleted successfully!"
-        }
-    '''
-    
-    #Validation
-    required_fields = {'module_id'}
-    if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing module_id!'}),400
-    #End
-    
-    module_id = data['module_id']
 
-    try:
-        response = (supabase.table('module')
-                    .delete()
-                    .eq('module_id',module_id)
-                    .execute())
-        print(response.data)
-        if response.data!=[]:
-            return jsonify({"Message":'Module deleted successfully!'}),201
-        else: 
-            return jsonify({"Error": 'Module not found!'}),404
-        
-    except Exception as e:
-        return jsonify({"Error":str(e)}),500
-
-    
 
 if __name__=='__main__':
     print("This is flask for " + os.path.basename(__file__) + ": module ...")
