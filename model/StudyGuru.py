@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from google import genai
 import random
 import json
+from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.feature_extraction.text import CountVectorizer
+
 
 load_dotenv()
 
@@ -20,6 +23,8 @@ class StudyGuru(SGRagModel):
         self.num = num
         
 
+    def cluster_topic(self,topics):
+        pass
 
     def random_topic(self,topics):
         n = min(self.num, len(topics))
