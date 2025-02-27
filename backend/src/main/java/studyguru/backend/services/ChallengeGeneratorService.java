@@ -28,16 +28,6 @@ public class ChallengeGeneratorService {
     private ModuleService moduleService;
     private RestTemplate restTemplate;
 
-    public ChallengeGeneratorService(CourseService courseService, 
-                                     CheckpointService checkpointService, 
-                                     ModuleService moduleService, 
-                                     RestTemplate restTemplate) {
-        this.courseService = courseService;
-        this.checkpointService = checkpointService;
-        this.moduleService = moduleService;
-        this.restTemplate = restTemplate;
-    }
-
     @Scheduled(cron = "0 0 0 * * *") // Midnight
     public void generateDailyChallengesForAllCourses() {
         List<Course> courses = courseService.getAllCourses();
