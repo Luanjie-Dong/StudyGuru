@@ -23,7 +23,8 @@ class SGExtractor:
     def get_content(self):
 
         try:
-            api_host = "http://localhost:5005"
+            # api_host = "http://localhost:5005"
+            api_host = "http://host.docker.internal:5005"
             url = f"{api_host}/one_note?note_id={self.file}"
 
             #Get Notes URL

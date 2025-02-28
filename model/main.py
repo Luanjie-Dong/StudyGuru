@@ -12,9 +12,9 @@ def generate_quiz():
     if not data:
             return jsonify({"error": "No JSON data provided"}), 400
     
-    challenge_type = data.get('challenge_type',"daily") # str
+    challenge_type = data.get('type',"DAILY") # str
     files = data.get('modules',[]) # list
-    course = data.get('course',"") #str
+    course = data.get('course_id',"") #str
 
     num_questions = challenge_questions(challenge_type)
     questions = generate_questions(num_questions,course,files)
@@ -52,7 +52,7 @@ def generate_questions(num,module,files):
 
 
 def challenge_questions(challenge_type):
-    if challenge_type == "Daily":
+    if challenge_type == "DAILY":
         return 5
     else:
         return 20

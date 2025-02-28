@@ -4,8 +4,11 @@ from dotenv import load_dotenv
 from google import genai
 import random
 import json
-from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.feature_extraction.text import CountVectorizer
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+
 
 
 load_dotenv()
@@ -21,14 +24,12 @@ class StudyGuru(SGRagModel):
         self.client = genai.Client(api_key=self.api_key)
         self.model = model_name
         self.num = num
+        self.topic_generation = TopicSelector()
         
 
-    def cluster_topic(self,topics):
-        pass
+    
 
-    def random_topic(self,topics):
-        n = min(self.num, len(topics))
-        return random.sample(topics, n)
+   
     
     def get_context(self,selected):
         
@@ -49,7 +50,7 @@ class StudyGuru(SGRagModel):
         return content
 
     def generate(self, topics):
-        selected_topics = self.random_topic(topics)
+        selected_topics = self.topic_generation.diversity_based_selection(topics)
         print(f"Selected {selected_topics}")
         selected_content = self.get_context(selected_topics)
 
@@ -115,6 +116,46 @@ def load_topic(path):
                 topics.append(topic)
 
     return topics  
+
+class TopicSelector:
+    def __init__(self,num_topics: int = 5, embedder: str ="sentence-transformers/all-MiniLM-L6-v2"):
+        self.num_topics = num_topics  
+        self.embedder = SentenceTransformer(embedder) 
+
+    def diversity_based_selection(self, topics, target=None, threshold=0.5):
+        if not topics:
+            return []
+
+        topic_embeddings = self.embedder.encode(topics, convert_to_tensor=False)
+
+        if target:
+            target_embedding = self.embedder.encode([target], convert_to_tensor=False)[0]
+            similarities = cosine_similarity([target_embedding], topic_embeddings).flatten()
+            filtered_indices = [i for i, sim in enumerate(similarities) if sim >= threshold]
+            filtered_topics = [topics[i] for i in filtered_indices]
+            filtered_embeddings = topic_embeddings[filtered_indices]
+        else:
+            filtered_topics = topics
+            filtered_embeddings = topic_embeddings
+
+        if not filtered_topics:
+            return []
+        
+        selected_indices = []
+        remaining_indices = list(range(len(filtered_topics)))
+
+        while len(selected_indices) < self.num_topics and remaining_indices:
+            if not selected_indices:
+                next_index = remaining_indices[0]
+            else:
+                selected_vectors = filtered_embeddings[selected_indices]
+                similarities = cosine_similarity(selected_vectors, filtered_embeddings).mean(axis=0)
+                next_index = remaining_indices[np.argmin(similarities[remaining_indices])]
+
+            selected_indices.append(next_index)
+            remaining_indices.remove(next_index)
+
+        return [filtered_topics[i] for i in selected_indices]
     
 
 if __name__ == "__main__":
