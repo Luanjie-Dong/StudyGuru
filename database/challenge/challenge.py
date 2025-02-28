@@ -160,4 +160,4 @@ def update_endtime():
 
 if __name__=='__main__':
     print("This is flask for " + os.path.basename(__file__))
-    app.run(debug=True)
+    app.run(host='0.0.0.0',debug=True, port=5000)
