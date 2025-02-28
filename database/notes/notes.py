@@ -19,7 +19,8 @@ def get_all_notes_for_module():
             {
                 "module_id": "a6efb5ac-c0aa-4b81-8541-cfea248f786a",
                 "note_id": "71364235-5489-4d10-aa4f-0c10fc403067",
-                "pdf_URL": "www.yahoo.com"
+                "pdf_URL": "www.yahoo.com",
+                "topics": ["Data Management"]
             }
         ]
     """
@@ -52,7 +53,8 @@ def get_one_note_by_id():
             {
                 "module_id": "06ba3cc9-c8e5-4294-8e78-21cc6c7097d4",
                 "note_id": "56cbeee4-d746-4927-8999-70df8b6d0723",
-                "pdf_URL": "https://lulvcodujqpxgvhkzyfc.supabase.co/storage/v1/object/public/notes/06ba3cc9-c8e5-4294-8e78-21cc6c7097d4/COGS_PwC_Case_Comp_Slidedeck.pdf?"
+                "pdf_URL": "https://lulvcodujqpxgvhkzyfc.supabase.co/storage/v1/object/public/notes/06ba3cc9-c8e5-4294-8e78-21cc6c7097d4/COGS_PwC_Case_Comp_Slidedeck.pdf?",
+                "topics": ["Data Management"]
             }
         ]
     """
@@ -82,7 +84,8 @@ def add_one_note():
         Sample data:
         { 
             "module_id":"a6efb5ac-c0aa-4b81-8541-cfea248f786a",
-            "pdf_URL":"www.yahoo.com"
+            "pdf_URL":"www.yahoo.com",
+            "topics":["Data Normalization","Data Management"]
         }
         Returns:
         {
@@ -92,14 +95,15 @@ def add_one_note():
     '''
     
     #Validation
-    required_fields = {'module_id', 'pdf_URL'}
+    required_fields = {'module_id', 'pdf_URL', 'topics'}
     if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing module_id or pdf_URL!'}),400
+        return jsonify({'Error':'Missing module_id, pdf_URL or topics!'}),400
     #End
     
     module_id = data['module_id']
     pdf_URL = data['pdf_URL']
-    insert_data = {"module_id":module_id, "pdf_URL":pdf_URL}
+    topics = data['topics']
+    insert_data = {"module_id":module_id, "pdf_URL":pdf_URL, "topics":topics}
 
     try:
         response = supabase.table('notes').insert(insert_data).execute()
