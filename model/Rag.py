@@ -3,24 +3,23 @@ from llama_index.core import  Document
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.text_splitter import SentenceSplitter
 from pinecone import Pinecone, ServerlessSpec
-import pinecone
 
 
 from extractor import SGExtractor
 import os
 from dotenv import load_dotenv
 import hashlib
-from transformers import pipeline , AutoTokenizer
 from sentence_transformers import SentenceTransformer
-import time
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
+import torch
 
 load_dotenv()
 
 # StudyGuru Rag Model = SGRagModel
 class SGRagModel:
-    def __init__(self, embedding_model, module):
+    def __init__(self, embedding_model, module , title_model_name):
         self.module = module
+        
         
         self.embedding_model = SentenceTransformer(embedding_model)
         self.dimension = self.embedding_model.get_sentence_embedding_dimension()
@@ -42,10 +41,12 @@ class SGRagModel:
         
         self.pinecone_index = self.pc.Index(self.pinecone_index_name)
         
-        self.title_extractor = pipeline("summarization", model="Falconsai/text_summarization")
+        self.title_model_name = title_model_name
+        self.title_model = AutoModelForSeq2SeqLM.from_pretrained(title_model_name)
+        self.title_model_tokenizer= AutoTokenizer.from_pretrained(title_model_name)
 
     
-        
+    
     def process_documents(self,file_path):
         print(f"Processing Documents from {file_path}")
         extractor = SGExtractor(file_path)
@@ -60,23 +61,29 @@ class SGRagModel:
         ]
         return page_documents
     
+    def extract_title(self,text):
+
+        inputs = self.title_model_tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        self.title_model.to(device)
+        inputs = {key: val.to(device) for key, val in inputs.items()}  
+
+        with torch.no_grad():
+            outputs = self.title_model.generate(**inputs,
+            max_length=20,
+            num_beams=4,
+            no_repeat_ngram_size=3,
+            early_stopping=True,
+            )
+
+        decoded_output = self.title_model_tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        return decoded_output
+    
     def contextual_chunking(self, chunk, chunk_info):
 
         print(f"Extracting title for: {chunk_info}")
-
-
-        summary = self.title_extractor(
-            chunk,
-            max_length=20,
-            min_length=5,
-            do_sample=True,      
-            top_k=50,            
-            top_p=0.95,          
-            temperature=0.1
-        )
-
-        context = summary[0]['summary_text']
-
+        context = self.extract_title(chunk)
 
         print(f'Context found: {context} \n')
 

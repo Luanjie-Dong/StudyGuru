@@ -13,9 +13,9 @@ load_dotenv()
 
 
 class StudyGuru(SGRagModel):
-    def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = None, collection: str = ""):
+    def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = None, collection: str = "",title_model: str=""):
 
-        super().__init__(embedding_model, collection)
+        super().__init__(embedding_model, collection , title_model)
 
         self.api_key = os.getenv("GEMINI_API_KEY")  
         self.client = genai.Client(api_key=self.api_key)
@@ -50,6 +50,7 @@ class StudyGuru(SGRagModel):
 
     def generate(self, topics):
         selected_topics = self.random_topic(topics)
+        print(f"Selected {selected_topics}")
         selected_content = self.get_context(selected_topics)
 
         print(selected_topics)

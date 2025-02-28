@@ -27,7 +27,8 @@ def generate_quiz():
 def generate_questions(num,module,files):
 
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
-    model = StudyGuru(num=num,embedding_model=hugging_embedding,collection=module)
+    title_model = "./title_model"
+    model = StudyGuru(num=num,embedding_model=hugging_embedding,collection=module,title_model=title_model)
 
     all_topics = []
     for file in files:
@@ -40,6 +41,8 @@ def generate_questions(num,module,files):
     if not all_topics:
         print("No topics found in the provided files. Cannot generate questions.")
         return None
+
+    # all_topics = [' • Contributions / MonthMonthly Loan Installment', '(n.d.) The role of the store: Merging digital and physical for seamless', 'ESSENCIA could capitalize on their “Pivot to Tech” initiative', 'Singapore & MalaysiaTARGETS Proposal for ESSEN', '(McKinsey & Company, 2023)Appare']
 
     print(f"Generating {num} questions from {len(all_topics)} topics...")
     questions = model.generate(all_topics)
@@ -55,4 +58,4 @@ def challenge_questions(challenge_type):
         return 20
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=1000,debug=True)
+    app.run(host="0.0.0.0",port=5000,debug=True)

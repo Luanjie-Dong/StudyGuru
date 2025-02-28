@@ -116,6 +116,8 @@ services:
     container_name: llm
     ports:
       - "5099:5000"
+    env_file:
+      - ./model/.env
 
 networks:
   app_network:

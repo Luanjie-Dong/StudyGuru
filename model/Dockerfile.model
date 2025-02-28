@@ -22,6 +22,7 @@ COPY requirements.txt ./
 
 RUN python -m pip install --no-cache-dir -r requirements.txt --only-binary pymupdf
 
-COPY ./*.py .
+COPY *.py ./
+COPY title_model ./title_model
 
 CMD ["python","./main.py"]
