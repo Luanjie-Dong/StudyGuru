@@ -79,6 +79,6 @@ def get_one_user_info():
 
 if __name__=='__main__':
     print("This is flask for " + os.path.basename(__file__) + ": users ...")
-    app.run(debug=True)
+    app.run(host='0.0.0.0',debug=True, port=5000)
 
     

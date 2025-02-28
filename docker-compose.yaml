@@ -1,0 +1,122 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+    depends_on:
+      - challenge
+      - checkpoint
+      - course
+      - module
+      - friends
+      - notes
+      - questions
+      - storage
+      - users
+      - llm
+
+  challenge:
+    build:
+      context: ./database/challenge
+      dockerfile: Dockerfile
+    container_name: challenge
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./database/.env
+
+  checkpoint:
+    build:
+      context: ./database/checkpoint
+      dockerfile: Dockerfile
+    container_name: checkpoint
+    ports:
+      - "5001:5000"
+    env_file:
+      - ./database/.env
+
+  course:
+    build:
+      context: ./database/course
+      dockerfile: Dockerfile
+    container_name: course
+    ports:
+      - "5002:5000"
+    env_file:
+      - ./database/.env
+
+  friends:
+    build:
+      context: ./database/friends
+      dockerfile: Dockerfile
+    container_name: friends
+    ports:
+      - "5003:5000"
+    env_file:
+      - ./database/.env
+
+  module:
+    build:
+      context: ./database/module
+      dockerfile: Dockerfile
+    container_name: module
+    ports:
+      - "5004:5000"
+    env_file:
+      - ./database/.env
+
+  notes:
+    build:
+      context: ./database/notes
+      dockerfile: Dockerfile
+    container_name: notes
+    ports:
+      - "5005:5000"
+    env_file:
+      - ./database/.env
+
+  questions:
+    build:
+      context: ./database/questions
+      dockerfile: Dockerfile
+    container_name: questions
+    ports:
+      - "5006:5000"
+    env_file:
+      - ./database/.env
+
+  storage:
+    build:
+      context: ./database/storage
+      dockerfile: Dockerfile
+    container_name: storage
+    ports:
+      - "5007:5000"
+    env_file:
+      - ./database/.env
+
+  users:
+    build:
+      context: ./database/users
+      dockerfile: Dockerfile
+    container_name: users
+    ports:
+      - "5008:5000"
+    env_file:
+      - ./database/.env
+
+  llm:
+    build:
+      context: ./model
+      dockerfile: Dockerfile.model
+    container_name: llm
+    ports:
+      - "5099:5000"
+
+networks:
+  app_network:
+    driver: bridge
