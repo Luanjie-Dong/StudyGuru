@@ -5,4 +5,4 @@ chroma_db
 backups
 .DS_Store
 training
-model/training/title_model.ipynb
+sub_models
