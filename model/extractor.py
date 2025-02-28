@@ -8,14 +8,39 @@ from PIL import Image
 from io import BytesIO
 from pathlib import Path
 import io
+import requests
 
 #StudyGuruExtractor = SGExtractor
 class SGExtractor:
 
-    def __init__(self,file_path):
-        self.data = file_path
+    def __init__(self,file):
+
+        self.file = file
+        self.url = None
+        self.data = None
         
 
+    def get_content(self):
+
+        try:
+            api_host = "http://localhost:5005"
+            url = f"{api_host}/one_note?note_id={self.file}"
+
+            #Get Notes URL
+            response = requests.get(url)
+            response.raise_for_status()  
+            json_data = response.json()
+            self.url = json_data[0].get("pdf_URL")
+            print(f"Successfully fetched url content for note ID: {self.file}")
+
+            #Get Notes Content
+            notes = requests.get(self.url)
+            notes.raise_for_status()
+            self.data = notes.content
+            
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching content for note ID {self.file}: {e}")
 
     def clean_text(self,content):
         content = re.sub(r"(\w+)-\n(\w+)", r"\1\2", content)
@@ -37,8 +62,9 @@ class SGExtractor:
         content = re.sub(r'[\u202a\u202b\u202c\u202d\u202e]', '', content)
         return content
     
-    def read_pdf(self,pdf_path):
-        doc = fitz.open(pdf_path)
+    def read_pdf(self):
+
+        doc = fitz.open(stream=self.data, filetype="pdf")
         text_output = {}
 
         for page_num, page in enumerate(doc, start=1):
@@ -61,8 +87,8 @@ class SGExtractor:
 
         return text_output
     
-    def read_pptx(self, pptx_path):
-        presentation = Presentation(pptx_path)
+    def read_pptx(self):
+        presentation = Presentation(BytesIO(self.data))
         text_output = {}
 
         for i, slide in enumerate(presentation.slides, start=1):
@@ -86,23 +112,25 @@ class SGExtractor:
         return text_output
     
 
-    def read_image(self,image_path):
-        image = Image.open(image_path)
+    def read_image(self):
+        image = Image.open(BytesIO(self.data))
         return {1:self.clean_text(pytesseract.image_to_string(image))}
     
 
     def extract_content(self):
 
-        file_type = Path(self.data).suffix
+        self.get_content()  
+
+        file_type = Path(self.url).suffix.lower().strip("?")
 
         if file_type == ".pdf":
-            return self.read_pdf(self.data)
-        
-        if file_type == ".pptx":
-            return self.read_pptx(self.data)
-        
-        if file_type in (".jpg", ".png", ".bmp", ".tiff"):
-            return self.read_image(self.data)
+            return self.read_pdf()
+        elif file_type == ".pptx":
+            return self.read_pptx()
+        elif file_type in (".jpg", ".png", ".bmp", ".tiff"):
+            return self.read_image()
+        else:
+            raise ValueError(f"Unsupported file type: {file_type}")
         
     
     def save_test_data(self,save_path):
@@ -123,7 +151,9 @@ if __name__=="__main__":
 
     test_type = "png"
     test_path = f'test_data/test.{test_type}'
-    extractor = SGExtractor(test_path)
+
+    test_url = "https://lulvcodujqpxgvhkzyfc.supabase.co/storage/v1/object/public/notes/06ba3cc9-c8e5-4294-8e78-21cc6c7097d4/COGS_PwC_Case_Comp_Slidedeck.pdf?"
+    extractor = SGExtractor(test_url)
     content = extractor.extract_content()
     
     for page in content:

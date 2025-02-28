@@ -124,7 +124,7 @@ class SGRagModel:
 
             self.pinecone_index.upsert([(doc_id, embedding, metadata)])
         
-        print(f"File '{self.data}' successfully ingested into Pinecone.")
+        print(f"Files successfully ingested into Pinecone.")
         return chunk_titles
 
     def generate_id(self, text, file_name, page):
