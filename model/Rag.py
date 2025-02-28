@@ -53,7 +53,7 @@ class SGRagModel:
 
         page_documents = [
             Document(
-                text=content[chunk][0] + content[chunk][1],
+                text= " ".join(content[chunk]),
                 metadata={"file_name": file_path, "page": chunk},
             )
             for chunk in content
