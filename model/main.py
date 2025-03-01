@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from StudyGuru import StudyGuru
+from StudyGuru import StudyGuru as sguru
 from flask_cors import CORS  
-from rag import SGRagModel
+from rag import SGRagModel as ragmodel
 from endpoints import get_topics
 
 app = Flask(__name__)
@@ -19,8 +19,11 @@ def generate_quiz():
     course = data.get('course_id',"")         #str
     challenge_id = data.get("challenge_id","")
 
-    num_questions = challenge_questions(challenge_type)
-    questions = generate_questions(num_questions,course,modules)
+    try:
+        num_questions = challenge_questions(challenge_type)
+        questions = generate_questions(num_questions,course,modules)
+    except:
+        return [], 400
 
     
 
@@ -46,9 +49,12 @@ def generate_topics():
     if note_url == "" or module == "":
         return jsonify({"error": "Missing notes or module data"}), 400
     
-    rag = SGRagModel(hugging_embedding,course,title_model)
+    rag = ragmodel(hugging_embedding,course,title_model)
 
-    topics = rag.ingest_documents(note_url,module)
+    try:
+        topics = rag.ingest_documents(note_url,module)
+    except:
+        return [] , 404
 
     return topics
          
@@ -59,7 +65,7 @@ def generate_questions(num,course,modules):
 
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     title_model = "./title_model"
-    model = StudyGuru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
+    model = sguru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
 
     
     topics = []

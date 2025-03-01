@@ -1,4 +1,4 @@
-from rag import SGRagModel
+from rag import SGRagModel 
 import os
 from dotenv import load_dotenv
 from google import genai
