@@ -26,35 +26,27 @@ class StudyGuru(SGRagModel):
         self.num = num
         self.topic_generation = TopicSelector()
         
-
     
-
-   
-    
-    def get_context(self,selected):
+    def get_context(self,selected_topics,modules):
         
         content = ""
-        for topic in selected:
+        for topic in selected_topics:
             query = f"What are the contents of {topic}"
-            context = super().retrieve(query)
+            context = super().retrieve(query,modules)
 
             for i, c in enumerate(context):
-
                 content += c['text'] +f" extracted from page: {c['page']}"+ "\n\n"
                 print(f"Context {i+1}:")
                 print(c['text'])
                 print("\n")
 
-            
-
         return content
 
-    def generate(self, topics):
+    def generate(self, topics , modules):
         selected_topics = self.topic_generation.diversity_based_selection(topics)
-        print(f"Selected {selected_topics}")
-        selected_content = self.get_context(selected_topics)
+        print("Selected topics are: ",selected_topics)
 
-        print(selected_topics)
+        selected_content = self.get_context(selected_topics,modules)
 
         generation_prompt = (
             f"Generate {self.num} questions based on the following context: {selected_content}\n\n"
@@ -62,21 +54,22 @@ class StudyGuru(SGRagModel):
             f"Return the output as a JSON array where each question is an object with the following structure:\n"
             f"```json\n"
             f"{{\n"
-            f"  \"question_number\": <integer>,\n"
-            f"  \"type\": \"<MCQ|Multi-select|Short open-ended>\",\n"
+            f"  \"question_no\": <integer>,\n"
+            f"  \"question_type\": \"<MCQ|Multi-select|Short open-ended>\",\n"
             f"  \"question\": \"<text of the question>\",\n"
             f"  \"options\": [\"<option1>\", \"<option2>\", ...] (omit or empty array if not applicable),\n"
             f"  \"answer\": \"<correct answer(s) as a string or array if multi-select>\"\n"
-            f"  \"context\": \"<formatted context used>\"\n"
-            f"  \"page\": \"<page number used>\"\n"
+            f"  \"hint\": \"<hint for the answer>\"\n"
             f"}}\n"
             f"```\n"
             f"Ensure the response is valid JSON and contains exactly {self.num} questions."
         )
 
+
         response = self.client.models.generate_content(
             model=self.model, contents=generation_prompt
         )
+
 
         if not response or not response.text:
             return "No response from Gemini."
@@ -92,6 +85,7 @@ class StudyGuru(SGRagModel):
 
         
     
+# For local testing
 def save_topics(topics,file):
     topics_path = data_path.split("/")[1]  
 
@@ -106,6 +100,7 @@ def save_topics(topics,file):
 
     print(f"Topics saved to {file_path}")
 
+# For local testing
 def load_topic(path):
     topics = []
 

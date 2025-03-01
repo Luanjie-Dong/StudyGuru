@@ -1,54 +1,78 @@
 from flask import Flask, request, jsonify
 from StudyGuru import StudyGuru
 from flask_cors import CORS  
+from rag import SGRagModel
+from endpoints import get_topics
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/generate",methods=['POST'])
+@app.route("/generate_question",methods=['POST'])
 def generate_quiz():
     
     data = request.json
     if not data:
             return jsonify({"error": "No JSON data provided"}), 400
     
-    challenge_type = data.get('type',"DAILY") # str
-    files = data.get('modules',[]) # list
-    course = data.get('course_id',"") #str
+    challenge_type = data.get('type',"DAILY") #str
+    modules = data.get('modules',[])          #list
+    course = data.get('course_id',"")         #str
+    challenge_id = data.get("challenge_id","")
 
     num_questions = challenge_questions(challenge_type)
-    questions = generate_questions(num_questions,course,files)
-
-
-    return questions
-
+    questions = generate_questions(num_questions,course,modules)
 
     
-def generate_questions(num,module,files):
+
+    return format_questions(questions,challenge_id)
+
+
+@app.route("/generate_topics",methods=['POST'])
+def generate_topics():
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No JSON data provided"}), 400
+    
+    hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
+    title_model = "./title_model"
+
+    
+    note_url = data.get('note_URL',"")
+    module = data.get('module_id',"")
+    course = data.get('course_id',"")
+
+    if note_url == "" or module == "":
+        return jsonify({"error": "Missing notes or module data"}), 400
+    
+    rag = SGRagModel(hugging_embedding,course,title_model)
+
+    topics = rag.ingest_documents(note_url,module)
+
+    return topics
+         
+ 
+    
+# Helper functions    
+def generate_questions(num,course,modules):
 
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     title_model = "./title_model"
-    model = StudyGuru(num=num,embedding_model=hugging_embedding,collection=module,title_model=title_model)
+    model = StudyGuru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
 
-    all_topics = []
-    for file in files:
-        topics = model.ingest_documents(file)
+    
+    topics = []
+    for module in modules:
+        sub_topic = get_topics(module)
+        topics.extend(sub_topic)
 
-        if topics:
-            print("Adding topics")
-            all_topics.extend(topics)
+    print(f"Generating {num} questions from {len(topics)} topics...")
+    questions = model.generate(topics,modules)
 
-    if not all_topics:
-        print("No topics found in the provided files. Cannot generate questions.")
-        return None
 
-    # all_topics = [' • Contributions / MonthMonthly Loan Installment', '(n.d.) The role of the store: Merging digital and physical for seamless', 'ESSENCIA could capitalize on their “Pivot to Tech” initiative', 'Singapore & MalaysiaTARGETS Proposal for ESSEN', '(McKinsey & Company, 2023)Appare']
-
-    print(f"Generating {num} questions from {len(all_topics)} topics...")
-    questions = model.generate(all_topics)
 
     return questions
-
 
 
 def challenge_questions(challenge_type):
@@ -56,6 +80,35 @@ def challenge_questions(challenge_type):
         return 5
     else:
         return 20
+    
+
+def format_questions(questions,challenge_id):
+
+    output = []
+    for question in questions:
+
+        question_detail = {
+            "type": question['question_type'],
+            "option":question['options'],
+            "question": question["question"]
+        }
+
+        detail = {
+            "challenge_id": challenge_id,
+            "question_no": question['question_no'],
+            "question_detail":question_detail,
+            "input": "",
+            "answer": question["answer"],
+            "explanation":"",
+            "hint": question["hint"],
+            "correct": None,
+            "question_score":0
+        }
+
+        output.append(detail)
+
+    return output
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=5000,debug=True)
+    app.run(host="0.0.0.0",port=1000,debug=True)

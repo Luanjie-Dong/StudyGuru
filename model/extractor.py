@@ -16,26 +16,14 @@ class SGExtractor:
     def __init__(self,file):
 
         self.file = file
-        self.url = None
-        self.data = None
+        
         
 
     def get_content(self):
 
         try:
-            # api_host = "http://localhost:5005"
-            api_host = "http://host.docker.internal:5005"
-            url = f"{api_host}/one_note?note_id={self.file}"
-
-            #Get Notes URL
-            response = requests.get(url)
-            response.raise_for_status()  
-            json_data = response.json()
-            self.url = json_data[0].get("pdf_URL")
-            print(f"Successfully fetched url content for note ID: {self.file}")
-
-            #Get Notes Content
-            notes = requests.get(self.url)
+            
+            notes = requests.get(self.file)
             notes.raise_for_status()
             self.data = notes.content
             
@@ -122,7 +110,7 @@ class SGExtractor:
 
         self.get_content()  
 
-        file_type = Path(self.url).suffix.lower().strip("?")
+        file_type = Path(self.file).suffix.lower().strip("?")
 
         if file_type == ".pdf":
             return self.read_pdf()

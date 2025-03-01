@@ -10,15 +10,15 @@ import os
 from dotenv import load_dotenv
 import hashlib
 from sentence_transformers import SentenceTransformer
-from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import  AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 
 load_dotenv()
 
 # StudyGuru Rag Model = SGRagModel
 class SGRagModel:
-    def __init__(self, embedding_model, module , title_model_name):
-        self.module = module
+    def __init__(self, embedding_model, course, title_model_name):
+        self.course = course
         
         
         self.embedding_model = SentenceTransformer(embedding_model)
@@ -28,7 +28,7 @@ class SGRagModel:
         self.chunk_overlap = 100
         self.pinecone_api_key = os.getenv("PINECONE_API_KEY") 
         self.pinecone_env = os.getenv("PINECONE_ENVIRONMENT")  
-        self.pinecone_index_name = f"{module}-index" 
+        self.pinecone_index_name = f"course-{self.course}" 
         self.pc = Pinecone(api_key=self.pinecone_api_key)
 
         if self.pinecone_index_name not in self.pc.list_indexes().names():
@@ -47,15 +47,15 @@ class SGRagModel:
 
     
     
-    def process_documents(self,file_path):
-        print(f"Processing Documents from {file_path}")
-        extractor = SGExtractor(file_path)
+    def process_documents(self,note,module):
+        print(f"Processing Documents from {note}")
+        extractor = SGExtractor(note)
         content = extractor.extract_content()
 
         page_documents = [
             Document(
                 text= " ".join(content[chunk]),
-                metadata={"file_name": file_path, "page": chunk},
+                metadata={"note_name": note, "page": chunk,"module_name":module},
             )
             for chunk in content
         ]
@@ -90,23 +90,23 @@ class SGRagModel:
         return context
 
 
-    def ingest_documents(self,data):
+    def ingest_documents(self,note,module):
         
-        print(f"Checking if this {data} has already been processed...")
+        print(f"Checking if this {note} has already been processed...")
         
         query_result = self.pinecone_index.query(
             vector=[0] * 384,  
-            filter={"file_name": {"$eq": data}},
+            filter={"file_name": {"$eq": note}},
             top_k=1,
             include_metadata=True
         )
         if query_result['matches']:
-            print(f"File '{data}' already exists in Pinecone. Skipping processing.")
+            print(f"File '{note}' already exists in Pinecone. Skipping processing.")
             return
 
         print("No existing records for this file. Processing and storing documents...")
 
-        documents = self.process_documents(data)
+        documents = self.process_documents(note,module)
         text_splitter = SentenceSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
 
         pipeline = IngestionPipeline(transformations=[text_splitter])
@@ -120,11 +120,12 @@ class SGRagModel:
 
             embedding = self.embedding_model.encode(node.text).tolist()
 
-            doc_id = self.generate_id(node.text, node.metadata["file_name"], node.metadata["page"])
+            doc_id = self.generate_id(node.text, node.metadata["note_name"], node.metadata["page"])
 
             metadata = {
-                "file_name": node.metadata["file_name"],
+                "file_name": node.metadata["note_name"],
                 "page": node.metadata["page"],
+                "module": node.metadata["module_name"],
                 "chunk_title": chunk_title,
                 "text": node.text
             }
@@ -140,13 +141,18 @@ class SGRagModel:
         return f"{base_id}_{text_hash}"
         
 
-    def retrieve(self, query):
+    def retrieve(self, query , modules):
         query_embedding = self.embedding_model.encode(query).tolist()
+
+        filter_condition = {
+        "module": {"$in": modules}  
+        }
 
         results = self.pinecone_index.query(
             vector=query_embedding,
             top_k=2,
-            include_metadata=True
+            include_metadata=True,
+            filter_condition = filter_condition
         )
 
         formatted_results = []
@@ -158,6 +164,10 @@ class SGRagModel:
                 "text": "Title: "+match['metadata'].get("chunk_title", "") + "\n\n" + match['metadata'].get("text", ""),
                 "page": match['metadata'].get("page","")
             })
+
+        if not formatted_results:
+            print(f"No results found for '{query}' in modules {modules}")
+            print(f"Raw Pinecone results: {results}")
 
         return formatted_results
 
