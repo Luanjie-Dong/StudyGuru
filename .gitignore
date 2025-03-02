@@ -1,6 +1,7 @@
 model_env
 test_data
 .env
+/env
 chroma_db
 backups
 .DS_Store

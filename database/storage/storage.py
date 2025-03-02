@@ -29,7 +29,7 @@ def upload_files():
     Returns:
     {
     "Message": "All files uploaded!",
-    "Uploaded Files:": [
+    "uploaded_files": [
         {
             "filename": "IS215_project.pdf",
             "url": "https://lulvcodujqpxgvhkzyfc.supabase.co/storage/v1/object/public/notes/bbb42c16-ada0-4d4a-abde-10068bf0a1f2/IS215_project.pdf?"
@@ -81,7 +81,7 @@ def upload_files():
                 return jsonify({'error': f'Invalid file type: {file.filename}. Only the following file types are allowed:{ALLOWED_EXTENSIONS}'}), 400
             
         return jsonify({'Message':"All files uploaded!",
-                        'Uploaded Files:':uploaded_files}),200
+                        'uploaded_files':uploaded_files}),200
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500

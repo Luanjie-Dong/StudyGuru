@@ -109,6 +109,18 @@ services:
     env_file:
       - ./database/.env
 
+  handle_upload:
+    build:
+      context: ./database/handle_upload
+      dockerfile: Dockerfile
+    container_name: handle_upload
+    ports:
+      - "6000:5000"
+    depends_on:
+      - storage
+      - notes
+      - llm
+
   llm:
     build:
       context: ./model
