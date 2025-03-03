@@ -28,6 +28,8 @@ services:
       - "5000:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   checkpoint:
     build:
@@ -38,6 +40,8 @@ services:
       - "5001:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   course:
     build:
@@ -48,6 +52,8 @@ services:
       - "5002:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   friends:
     build:
@@ -58,6 +64,8 @@ services:
       - "5003:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   module:
     build:
@@ -68,6 +76,8 @@ services:
       - "5004:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   notes:
     build:
@@ -78,6 +88,8 @@ services:
       - "5005:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   questions:
     build:
@@ -88,6 +100,8 @@ services:
       - "5006:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   storage:
     build:
@@ -98,6 +112,8 @@ services:
       - "5007:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   users:
     build:
@@ -108,6 +124,8 @@ services:
       - "5008:5000"
     env_file:
       - ./database/.env
+    networks:
+      - app_network
 
   handle_upload:
     build:
@@ -120,6 +138,8 @@ services:
       - storage
       - notes
       - llm
+    networks: 
+      - app_network
 
   llm:
     build:
@@ -130,6 +150,8 @@ services:
       - "5099:5000"
     env_file:
       - ./model/.env
+    networks:
+      - app_network
 
 networks:
   app_network:

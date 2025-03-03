@@ -49,11 +49,14 @@ def generate_topics():
     if note_url == "" or module == "":
         return jsonify({"error": "Missing notes or module data"}), 400
     
+    print("Generating topics for document...",flush=True)
     rag = ragmodel(hugging_embedding,course,title_model)
 
     try:
         topics = rag.ingest_documents(note_url,module)
+        print("Successfully generated topics! Topics:",topics,flush=True)
     except:
+        print("No topics generated",flush=True)
         return [] , 404
 
     return topics
