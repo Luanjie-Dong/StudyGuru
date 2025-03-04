@@ -17,7 +17,7 @@ public class CourseService {
     @Value("$(course.microservice.url)")
     private String courseMicroserviceUrl;
     
-    private RestTemplate restTemplate;
+    private RestTemplate restTemplate = new RestTemplate();
 
     public List<Course> getAllCourses() {
         ResponseEntity<Course[]> response = restTemplate.getForEntity(courseMicroserviceUrl + "/course", Course[].class);
