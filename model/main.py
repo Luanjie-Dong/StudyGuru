@@ -53,33 +53,26 @@ def generate_topics():
     rag = ragmodel(hugging_embedding,course,title_model)
 
     
-    topics = extract_topic(note_url,module,rag)
+    attempts = 3
+    while attempts > 0:
+        try:
+            topics = rag.ingest_documents(note_url,module)
+            return topics
+                    
+        except:
+            print("No topics generated",flush=True)
 
-    if topics != []:
-        return topics
-    else:
-        retries = 3
-        while retries > 0 and topics != []:
-            topics = extract_topic(note_url,module,rag)
+        if attempts > 0:
+            print(f"Retrying... ({attempts} attempts left)")
         
-        if topics == []:
-            return "Fail to extract topics" , 404
-
+        attempts -= 1
+    
+    return []
     
          
  
     
 # Helper functions  
-def extract_topic(note_url,module,rag):
-    try:
-        topics = rag.ingest_documents(note_url,module)
-
-        return topics
-                
-    except:
-        print("No topics generated",flush=True)
-        return []
-
 def generate_questions(num,course,modules):
 
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
