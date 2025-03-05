@@ -7,6 +7,7 @@ def get_topics(module_id):
     # notes_endpoint = f"http://host.docker.internal:5005/notes?module_id={module_id}"
 
     notes_endpoint = f"http://127.0.0.1:5005/notes?module_id={module_id}"
+    
     try:
         response = requests.get(notes_endpoint)
         response.raise_for_status()

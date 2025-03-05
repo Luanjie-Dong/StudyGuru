@@ -9,6 +9,7 @@ from io import BytesIO
 from pathlib import Path
 import io
 import requests
+from cleaner import clean_text
 
 #StudyGuruExtractor = SGExtractor
 class SGExtractor:
@@ -31,25 +32,6 @@ class SGExtractor:
         except requests.exceptions.RequestException as e:
             print(f"Error fetching content for note ID {self.file}: {e}")
 
-    def clean_text(self,content):
-        content = re.sub(r"(\w+)-\n(\w+)", r"\1\2", content)
-        unwanted_patterns = [
-            "\\n",
-            "  —",
-            "——————————",
-            "—————————",
-            "—————",
-            r"\\u[\dA-Fa-f]{4}",
-            r"\uf075",
-            r"\uf0b7",
-        ]
-        for pattern in unwanted_patterns:
-            content = re.sub(pattern, "", content)
-
-        content = re.sub(r"(\w)\s*-\s*(\w)", r"\1-\2", content)
-        content = re.sub(r"\s+", " ", content)
-        content = re.sub(r'[\u202a\u202b\u202c\u202d\u202e]', '', content)
-        return content
     
     def read_pdf(self):
 
