@@ -57,13 +57,18 @@ def generate_topics():
     while attempts > 0:
         try:
             topics = rag.ingest_documents(note_url,module)
-            return topics
+
+            if topics and topics != "Processed":
+                return topics
+            
+            if topics == "Processed":
+                return "Topics already extracted"
                     
         except:
             print("No topics generated",flush=True)
 
         if attempts > 0:
-            print(f"Retrying... ({attempts} attempts left)")
+            print(f"Retrying... ({attempts-1} attempts left) \n")
         
         attempts -= 1
     
@@ -79,18 +84,27 @@ def generate_questions(num,course,modules):
     title_model = "./title_model"
     model = sguru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
 
-    
+    print("Extraction topics for question generation",flush=True)
+
     topics = []
     for module in modules:
         sub_topic = get_topics(module)
         topics.extend(sub_topic)
 
-    print(f"Generating {num} questions from {len(topics)} topics...")
-    questions = model.generate(topics,modules)
+    if topics == []:
+        return "Error in retrieving topics :/ Try again later"
+
+    print(f"Generating {num} questions from {len(topics)} topics...",flush=True)
+
+    try:
+        questions = model.generate(topics,modules)
+        return questions
+    except:
+        return "Error in generating questions :/"
 
 
 
-    return questions
+    
 
 
 def challenge_questions(challenge_type):

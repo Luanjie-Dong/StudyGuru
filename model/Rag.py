@@ -102,7 +102,7 @@ class SGRagModel:
         )
         if query_result['matches']:
             print(f"File '{note}' already exists in Pinecone. Skipping processing.")
-            return
+            return "Processed"
 
         print("No existing records for this file. Processing and storing documents...")
 

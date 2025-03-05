@@ -36,15 +36,15 @@ class StudyGuru(SGRagModel):
 
             for i, c in enumerate(context):
                 content += c['text'] +f" extracted from page: {c['page']}"+ "\n\n"
-                print(f"Context {i+1}:")
-                print(c['text'])
-                print("\n")
+                print(f"Context {i+1}:",flush=True)
+                print(c['text'],flush=True)
+                print("\n",flush=True)
 
         return content
 
     def generate(self, topics , modules):
         selected_topics = self.topic_generation.diversity_based_selection(topics)
-        print("Selected topics are: ",selected_topics)
+        print("Selected topics are: ",selected_topics,flush=True)
 
         selected_content = self.get_context(selected_topics,modules)
 

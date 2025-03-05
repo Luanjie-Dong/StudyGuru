@@ -23,7 +23,6 @@ class SGExtractor:
     def get_content(self):
 
         try:
-            
             notes = requests.get(self.file)
             notes.raise_for_status()
             self.data = notes.content
@@ -41,10 +40,12 @@ class SGExtractor:
         for page_num, page in enumerate(doc, start=1):
             print(f"Processing page {page_num}")
 
-            text = self.clean_text(page.get_text("text"))
+            text = clean_text(page.get_text("text"))
+
             if text:
                 print("Extracted text using fitz.")
                 text_output[page_num] = [text]
+
 
             images = page.get_images(full=True)
             images_text = ""
@@ -53,7 +54,7 @@ class SGExtractor:
                 base_image = doc.extract_image(xref)  
                 image_bytes = base_image["image"]
                 image = Image.open(io.BytesIO(image_bytes)) 
-                images_text += self.clean_text(pytesseract.image_to_string(image))
+                images_text += clean_text(pytesseract.image_to_string(image))
             text_output[page_num].append(images_text)
 
         return text_output
@@ -67,7 +68,7 @@ class SGExtractor:
 
             for shape in slide.shapes:
                 if shape.has_text_frame:
-                    cleaned_text = self.clean_text(shape.text_frame.text) 
+                    cleaned_text = clean_text(shape.text_frame.text) 
                     text_output.setdefault(i, []).append(cleaned_text) 
 
                 if hasattr(shape, "image"):  
@@ -75,7 +76,7 @@ class SGExtractor:
                         image_bytes = shape.image.blob
                         image = Image.open(BytesIO(image_bytes))
 
-                        ocr_text = self.clean_text(pytesseract.image_to_string(image))
+                        ocr_text = clean_text(pytesseract.image_to_string(image))
                         text_output.setdefault(i, []).append(ocr_text)  
                     except Exception as e:
                         print(f"Error processing image on slide {i}: {e}")
@@ -85,7 +86,7 @@ class SGExtractor:
 
     def read_image(self):
         image = Image.open(BytesIO(self.data))
-        return {1:self.clean_text(pytesseract.image_to_string(image))}
+        return {1:clean_text(pytesseract.image_to_string(image))}
     
 
     def extract_content(self):
