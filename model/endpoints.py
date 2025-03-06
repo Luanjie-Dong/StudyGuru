@@ -5,16 +5,19 @@ import time
 #module_id
 def get_topics(module_id):
     
-    # notes_endpoint = f"http://notes:5005/notes?module_id={module_id}"
+    notes_endpoint = f"http://notes:5005/notes?module_id={module_id}"
 
-    notes_endpoint = f"http://127.0.0.1:5005/notes?module_id={module_id}"
+    # notes_endpoint = f"http://127.0.0.1:5005/notes"
+    notes_param = {
+        "module_id": module_id
+    }
 
     retries = 3  
     delay = 2    
 
     while retries > 0:
         try:
-            response = requests.get(notes_endpoint)
+            response = requests.get(notes_endpoint,params=notes_param)
             response.raise_for_status()  
             notes_data = response.json()
 
