@@ -5,7 +5,7 @@ import time
 #module_id
 def get_topics(module_id):
     
-    notes_endpoint = f"http://notes:5005/notes?module_id={module_id}"
+    notes_endpoint = f"http://notes:5000/notes?module_id={module_id}"
 
     # notes_endpoint = f"http://127.0.0.1:5005/notes"
     notes_param = {
