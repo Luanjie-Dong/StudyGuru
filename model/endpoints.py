@@ -45,25 +45,23 @@ def get_topics(module_id):
 
 
 
-# def challenge_answer(challenge_id):
+def get_quizzes(challenge_id):
 
-#     notes_endpoint = f"http://host.docker.internal:5005/notes?module_id={module_id}"
-
-#     try:
-#         response = requests.get(notes_endpoint)
-#         response.raise_for_status()
-
-#         notes_data = response.json()
-
-#         topics = []
-#         for note in notes_data:
-#             topics.extend(note.get("topics",""))
-
-#         return topics            
+    # questions_endpoint = f"http://questions:5000/questions_attempt?challenge_id={challenge_id}"
+    questions_endpoint = f"http://127.0.0.1:5006/questions_attempt?challenge_id={challenge_id}"
 
 
-#     except requests.exceptions.RequestException as e:
-#             print(f"Error fetching content for module: {module_id}: {e}")
+    try:
+        response = requests.get(questions_endpoint)
+        response.raise_for_status()
+
+        questions_data = response.json()
+
+        return questions_data          
+
+
+    except requests.exceptions.RequestException as e:
+            print(f"Error fetching content for module: {challenge_id}: {e}")
 
 
 

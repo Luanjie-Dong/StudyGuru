@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
-from StudyGuru import StudyGuru as sguru
+from StudyGuru import StudyGuru as sguru , StudyGuruReviewer as sgurureview
 from flask_cors import CORS  
 from rag import SGRagModel as ragmodel
-from endpoints import get_topics
+from endpoints import get_topics , get_quizzes
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -24,9 +25,6 @@ def generate_quiz():
         questions = generate_questions(num_questions,course,modules)
     except:
         return [], 400
-
-    
-
     return format_questions(questions,challenge_id)
 
 
@@ -74,8 +72,38 @@ def generate_topics():
     
     return []
     
-         
- 
+     
+@app.route("/review",methods=['POST'])
+def review_quiz():
+    
+    data = request.json
+    if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+    
+    challenge_id = data.get("challenge_id","")
+
+    try:
+        print(f"Extracting questions from challenge {challenge_id} to review",flush=True)
+        questions = get_quizzes(challenge_id)
+
+        with open("test_data/questions.json", 'r', encoding='utf-8') as file:
+            test = json.load(file)
+
+        questions = test
+        if questions:
+            print(f"Reviewing questions of {challenge_id}",flush=True)
+            try:
+                model = sgurureview()
+                reviewed = model.review(questions)
+                return reviewed
+            except Exception as e:
+                print(e)
+        else:
+            return f"No questions extracted from {challenge_id}", 400
+
+    except:
+        return [], 400
+    
     
 # Helper functions  
 def generate_questions(num,course,modules):
@@ -103,10 +131,6 @@ def generate_questions(num,course,modules):
         return "Error in generating questions :/"
 
 
-
-    
-
-
 def challenge_questions(challenge_type):
     if challenge_type == "DAILY":
         return 5
@@ -121,25 +145,37 @@ def format_questions(questions,challenge_id):
 
         question_detail = {
             "type": question['question_type'],
-            "option":question['options'],
+            "options":question['options'],
             "question": question["question"]
         }
+
+        if question['question_type'] == "MCQ" or "open-ended":
+            answer = [question["answer"]]
+        else:
+            answer = question["answer"]
 
         detail = {
             "challenge_id": challenge_id,
             "question_no": question['question_no'],
             "question_detail":question_detail,
             "input": "",
-            "answer": question["answer"],
+            "answer": answer,
             "explanation":"",
             "hint": question["hint"],
             "correct": None,
-            "question_score":0
+            "question_score":0,
         }
 
         output.append(detail)
 
     return output
+
+
+# def review_quizzes(questions):
+
+#     reviewed = []
+
+#     return reviewed
 
 
 if __name__ == "__main__":

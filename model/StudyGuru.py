@@ -16,7 +16,8 @@ load_dotenv()
 
 
 class StudyGuru(SGRagModel):
-    def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = None, collection: str = "",title_model: str=""):
+    def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = "", collection: str = "",title_model: str=""):
+
 
         super().__init__(embedding_model, collection , title_model)
 
@@ -35,7 +36,7 @@ class StudyGuru(SGRagModel):
             context = super().retrieve(query,modules)
 
             for i, c in enumerate(context):
-                content += c['text'] +f" extracted from page: {c['page']}"+ "\n\n"
+                content += c['text'] +f" extracted from page: {c['page']} and note url: {c['note_url']}"+ "\n\n"
                 print(f"Context {i+1}:",flush=True)
                 print(c['text'],flush=True)
                 print("\n",flush=True)
@@ -60,6 +61,8 @@ class StudyGuru(SGRagModel):
             f"  \"options\": [\"<option1>\", \"<option2>\", ...] (omit or empty array if not applicable),\n"
             f"  \"answer\": \"<correct answer(s) as a string or array if multi-select>\"\n"
             f"  \"hint\": \"<hint for the answer>\"\n"
+            f"  \"page\": \"<page of the content used>\"\n"
+            f"  \"url\": \"<note url of the content used>\"\n"
             f"}}\n"
             f"```\n"
             f"Ensure the response is valid JSON and contains exactly {self.num} questions."
@@ -82,6 +85,7 @@ class StudyGuru(SGRagModel):
             return questions 
         except json.JSONDecodeError as e:
             return f"Error parsing JSON response: {str(e)}\nRaw response: {response.text}"
+        
 
         
     
@@ -152,6 +156,69 @@ class TopicSelector:
 
         return [filtered_topics[i] for i in selected_indices]
     
+
+class StudyGuruReviewer:
+    def __init__(self, model_name: str ="gemini-2.0-flash"):
+        self.api_key = os.getenv("GEMINI_API_KEY")  
+        self.client = genai.Client(api_key=self.api_key)
+        self.model = model_name
+
+    def review(self, questions):
+        
+        prompt_formatted = []
+
+        print("Formatting questions for review",flush=True)
+        for question in questions:
+            print("Reviewing question",question,"\n")
+
+            prompt = (
+            f"User has selected answer: {question['input']}\n"
+            f"for question {question['question_no']} [{question['question_detail']['type']}]: "
+            f"{question['question_detail']['question']} with correct answer(s): {question['answer']} "
+            f"and options: {question['question_detail']['options']}"
+            )
+
+            print("Prompt",prompt)
+            prompt_formatted.append(prompt)
+
+        print("Reviewing quesions now...",flush=True)
+        prompt_formatted = "\n".join(prompt_formatted)
+        generation_prompt = (
+            f"Review each question based on the following context:\n{prompt_formatted}\n\n"
+            f"Provide feedback for each question and return the output as a JSON array.\n"
+            f"Each reviewed question should be an object with the following structure:\n"
+            f"```json\n"
+            f"{{\n"
+            f"  \"question_no\": <integer>,\n"
+            f"  \"question_type\": \"<MCQ|Multi-select|Short open-ended>\",\n"
+            f"  \"question\": \"<text of the question>\",\n"
+            f"  \"options\": [\"<option1>\", \"<option2>\", ...] (omit or empty array if not applicable),\n"
+            f"  \"answer\": \"<correct answer(s) as a string or array if multi-select>\",\n"
+            f"  \"input\": \"<user input for question>\",\n"
+            f"  \"explanation\": \"<review feedback>\"\n"
+            f"  \"score\": \"Give a score out of 100 percent for the review of open-ended and True or False for other question type\"\n"
+            f"}}\n"
+            f"```\n"
+            f"Ensure the response is valid JSON. If not try again"
+        )
+
+
+        response = self.client.models.generate_content(
+            model=self.model, contents=generation_prompt
+        )
+
+
+        if not response or not response.text:
+            return "No response from Gemini."
+
+        try:
+            json_text = response.text.strip()
+            if json_text.startswith("```json") and json_text.endswith("```"):
+                json_text = json_text[7:-3].strip()  
+            questions = json.loads(json_text)
+            return questions 
+        except json.JSONDecodeError as e:
+            return f"Error parsing JSON response: {str(e)}\nRaw response: {response.text}"
 
 if __name__ == "__main__":
     data_path = "test_data/test.pdf"

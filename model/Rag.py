@@ -17,7 +17,7 @@ load_dotenv()
 
 # StudyGuru Rag Model = SGRagModel
 class SGRagModel:
-    def __init__(self, embedding_model, course, title_model_name):
+    def __init__(self, embedding_model: str = "", course = "", title_model_name: str = ""):
         self.course = course
         
         
@@ -161,8 +161,9 @@ class SGRagModel:
                 "id": match['id'],
                 "score": match['score'],
                 "metadata": match['metadata'],
-                "text": "Title: "+match['metadata'].get("chunk_title", "") + "\n\n" + match['metadata'].get("text", ""),
-                "page": match['metadata'].get("page","")
+                "text": "Title: "+match['metadata'].get("chunk_title", "") + "\n\n" + match['metadata'].get("text", "") ,
+                "page": match['metadata'].get("page",""),
+                "note_url": match['metadata'].get("file_name", "")
             })
 
         if not formatted_results:
