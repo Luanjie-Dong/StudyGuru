@@ -86,10 +86,11 @@ def review_quiz():
         print(f"Extracting questions from challenge {challenge_id} to review",flush=True)
         questions = get_quizzes(challenge_id)
 
-        with open("test_data/questions.json", 'r', encoding='utf-8') as file:
-            test = json.load(file)
+        # Used to test
+        # with open("test_data/questions.json", 'r', encoding='utf-8') as file:
+        #     test = json.load(file)
+        # questions = test
 
-        questions = test
         if questions:
             print(f"Reviewing questions of {challenge_id}",flush=True)
             try:
