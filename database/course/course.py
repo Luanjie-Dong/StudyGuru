@@ -20,7 +20,8 @@ def get_all_courses():
             "course_name": "DBTT",
             "created_at": "2025-02-22T06:57:01.417418+00:00",
             "streak": 0,
-            "userid": "502a0caa-8812-424f-9490-eb73f2722ac0"
+            "userid": "502a0caa-8812-424f-9490-eb73f2722ac0",
+            "completed_challenge": false
         }
     """
 
@@ -111,23 +112,26 @@ def delete_one_course():
 def update_streak():
     data = request.get_json()
     """
-    Sample Data:
-    {
-        "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2",
-        "completed_challenge":true
-    }
+    ONLY CALL THIS IF USER HAS COMPLETED DAILY CHALLENGE FOR COURSE.
 
-    Returns:
+        Sample Data:
+        {
+            "course_id":"d14c272a-e38d-4cfb-b952-e2617029a2d2",
+        }
 
+        Returns:
+        {
+            "Message": "Streak for course d14c272a-e38d-4cfb-b952-e2617029a2d2 updated successfully!"
+        }
     """
     #Validation
-    required_fields={'course_id','completed_challenge'}
+    required_fields={'course_id'}
     if not data or not all(field in data for field in required_fields):
-        return jsonify({'Error':'Missing course_id or completed_challenge'}),400
+        return jsonify({'Error':'Missing course_id'}),400
     #End
     
     course_id = data['course_id']
-    completed_challenge = data['completed_challenge']
+
     try:
         response=(
             supabase.table('course')
@@ -140,9 +144,10 @@ def update_streak():
         else:
             return jsonify({"Error": f'Could not retrieve streak for course {course_id}...'}),500
         
-        new_streak = current_streak +1 if completed_challenge else 0
+        new_streak = current_streak +1
         update_data = {
-            'streak':new_streak
+            'streak':new_streak,
+            'completed_challenge':True
         }
         update_response=(supabase.table('course')
                         .update(update_data)

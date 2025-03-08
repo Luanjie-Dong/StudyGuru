@@ -1,5 +1,6 @@
 package studyguru.backend.models;
 
+import java.util.*;
 // import jakarta.persistence.*;
 
 // @Entity
@@ -11,14 +12,14 @@ public class Question {
     private int question_no;
     private QuestionDetail question_detail;
     private String input;
-    private String answer;
+    private List<String> answer;
     private String explanation;
     private String hint;
     private boolean correct;
     private int question_score;
     
     public Question(String question_id, String challenge_id, int question_no, QuestionDetail question_detail,
-            String input, String answer, String explanation, String hint, boolean correct, int question_score) {
+            String input, List<String> answer, String explanation, String hint, boolean correct, int question_score) {
         this.question_id = question_id;
         this.challenge_id = challenge_id;
         this.question_no = question_no;
@@ -51,7 +52,7 @@ public class Question {
         return input;
     }
 
-    public String getAnswer() {
+    public List<String> getAnswer() {
         return answer;
     }
 

@@ -24,7 +24,7 @@ def add_questions():
                     "type": "multi-select",
                     "options": [1,2,3,7]
                     },
-                "answer":"7",
+                "answer":["7"],
                 "hint":"Addition"
             }]
         Returns:
@@ -72,7 +72,7 @@ def get_all_questions_for_challenge():
         Returns:
         [
             {
-                "answer": "7",
+                "answer": ["7"],
                 "hint": "Addition",
                 "question_detail":{
                     "question": "What is 4+3",
@@ -114,7 +114,7 @@ def get_all_questions_for_challenge_recent_attempt():
     Returns:
         [
             {
-                "answer": "7",
+                "answer": ["7"],
                 "correct": null,
                 "explanation": null,
                 "input": null,
