@@ -196,7 +196,7 @@ class StudyGuruReviewer:
             f"  \"answer\": \"<correct answer(s) as a string or array if multi-select>\",\n"
             f"  \"input\": \"<user input for question>\",\n"
             f"  \"explanation\": \"<review feedback>\"\n"
-            f"  \"score\": \"Give a score out of 100 percent for the review of open-ended and True or False for other question type\"\n"
+            f"  \"question_score\": \"Give a score out of 100 percent for the review of open-ended and True or False for other question type\"\n"
             f"}}\n"
             f"```\n"
             f"Ensure the response is valid JSON. If not try again"
