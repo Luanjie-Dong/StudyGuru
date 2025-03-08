@@ -47,8 +47,8 @@ def get_topics(module_id):
 
 def get_quizzes(challenge_id):
 
-    # questions_endpoint = f"http://questions:5000/questions_attempt?challenge_id={challenge_id}"
-    questions_endpoint = f"http://127.0.0.1:5006/questions_attempt?challenge_id={challenge_id}"
+    questions_endpoint = f"http://questions:5000/questions_attempt?challenge_id={challenge_id}"
+    # questions_endpoint = f"http://127.0.0.1:5006/questions_attempt?challenge_id={challenge_id}"
 
 
     try:
