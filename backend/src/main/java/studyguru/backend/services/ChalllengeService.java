@@ -15,15 +15,18 @@ import java.util.List;
 @Service
 public class ChalllengeService {
 
-    @Value("$(challenge.microservice.url)")
+    @Value("${challenge.microservice.url}")
     private String challengeMicroserviceUrl;
     
     private RestTemplate restTemplate = new RestTemplate();
 
     public Challenge createChallenge(ChallengeRequestDAO request) {
-        ResponseEntity<Challenge> response = restTemplate.postForObject(challengeMicroserviceUrl + "/course", request, ResponseEntity.class);
-        Challenge challenge = response.getBody();
-        return challenge;
+        ResponseEntity<Challenge> response = restTemplate.postForEntity(
+            challengeMicroserviceUrl + "/challenge", 
+            request, 
+            Challenge.class
+        );
+        return response.getBody();
     }
     
 }

@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 public class CourseService {
 
-    @Value("$(course.microservice.url)")
+    @Value("${course.microservice.url}")
     private String courseMicroserviceUrl;
     
     private RestTemplate restTemplate = new RestTemplate();

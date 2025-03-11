@@ -18,7 +18,7 @@ import java.util.List;
 @Service
 public class CheckpointService {
 
-    @Value("$(checkpoint.microservice.url)")
+    @Value("${checkpoint.microservice.url}")
     private String checkpointMicroserviceUrl;
 
     private RestTemplate restTemplate = new RestTemplate();

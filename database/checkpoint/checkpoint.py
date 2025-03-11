@@ -76,7 +76,7 @@ def get_all_checkpoints_by_date():
         if response.data:
             return jsonify(response.data),200
         else:
-            return jsonify({'Error':f"No checkpoint for date:{date}"}),404
+            return jsonify([]),200
     except Exception as e:
         return jsonify({"Error":str(e)}),500
     
