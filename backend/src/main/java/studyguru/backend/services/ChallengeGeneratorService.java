@@ -63,10 +63,10 @@ public class ChallengeGeneratorService {
         String latestModuleId = course.getLatest_module_id();
         List<String> modules = List.of(latestModuleId);
         // Pre-generate challenge
-        ChallengeRequestDAO challengeRequest = new ChallengeRequestDAO(course.getCourse_id(), ChallengeType.DAILY);
+        ChallengeRequestDAO challengeRequest = new ChallengeRequestDAO(course.getCourse_id(), ChallengeType.DAILY.toString());
         Challenge newChallenge = challlengeService.createChallenge(challengeRequest);
         // Generate questions
-        QuestionsRequestDAO questionsRequest = new QuestionsRequestDAO(ChallengeType.DAILY, modules, course.getCourse_id(), newChallenge.getChallenge_id());
+        QuestionsRequestDAO questionsRequest = new QuestionsRequestDAO(ChallengeType.DAILY.toString(), modules, course.getCourse_id(), newChallenge.getChallenge_id());
         Question[] questions = generateQuestionsRequest(questionsRequest);
 
         questionService.createQuestions(questions);
@@ -81,10 +81,10 @@ public class ChallengeGeneratorService {
             : List.of();
 
         // Pre-generate challenge
-        ChallengeRequestDAO challengeRequest = new ChallengeRequestDAO(course_id, ChallengeType.CHECKPOINT);
+        ChallengeRequestDAO challengeRequest = new ChallengeRequestDAO(course_id, ChallengeType.CHECKPOINT.toString());
         Challenge newChallenge = challlengeService.createChallenge(challengeRequest);
         // Generate questions
-        QuestionsRequestDAO questionsRequest = new QuestionsRequestDAO(ChallengeType.CHECKPOINT, modules, course_id, newChallenge.getChallenge_id());
+        QuestionsRequestDAO questionsRequest = new QuestionsRequestDAO(ChallengeType.CHECKPOINT.toString(), modules, course_id, newChallenge.getChallenge_id());
         Question[] questions = generateQuestionsRequest(questionsRequest);
 
         questionService.createQuestions(questions);

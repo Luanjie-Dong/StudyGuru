@@ -2,10 +2,8 @@ package studyguru.backend.models;
 
 import java.util.List;
 
-import studyguru.backend.enums.ChallengeType;
-
 public class QuestionsRequestDAO {
-    private ChallengeType type;
+    private String type;
     private List<String> modules;
     private String course_id;
     private String challenge_id;
@@ -13,14 +11,14 @@ public class QuestionsRequestDAO {
     public QuestionsRequestDAO() {
     }
     
-    public QuestionsRequestDAO(ChallengeType type, List<String> modules, String course_id, String challenge_id) {
+    public QuestionsRequestDAO(String type, List<String> modules, String course_id, String challenge_id) {
         this.type = type;
         this.modules = modules;
         this.course_id = course_id;
         this.challenge_id = challenge_id;
     }
 
-    public ChallengeType getType() {
+    public String getType() {
         return type;
     }
     public List<String> getModules() {
