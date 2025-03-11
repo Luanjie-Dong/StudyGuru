@@ -150,7 +150,7 @@ def format_questions(questions,challenge_id):
             "question": question["question"]
         }
 
-        if question['question_type'] == "MCQ" or "open-ended":
+        if question['question_type'] in ["MCQ", "SHORT_ANSWER"]:
             answer = [question["answer"]]
         else:
             answer = question["answer"]
