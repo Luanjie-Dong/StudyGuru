@@ -84,7 +84,8 @@ def review_quiz():
 
     try:
         print(f"Extracting questions from challenge {challenge_id} to review",flush=True)
-        questions = get_quizzes(challenge_id)
+        # questions = get_quizzes(challenge_id)
+        questions = data["questions"]
 
         # Used to test
         # with open("test_data/questions.json", 'r', encoding='utf-8') as file:

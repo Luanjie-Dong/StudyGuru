@@ -45,6 +45,7 @@ public class ChallengeGeneratorService {
 
     @Scheduled(cron = "0 0 0 * * *") // Midnight
     public void generateDailyChallengesForAllCourses() {
+        System.out.println("LLM Microservice URL: " + llmMicroserviceUrl);
         List<Course> courses = courseService.getAllCourses();
         for (Course course : courses) {
             generateDailyChallenge(course);
@@ -53,6 +54,7 @@ public class ChallengeGeneratorService {
 
     @Scheduled(cron = "0 0 5 * * *") // 5 seconds after midnight, for improved efficiency
     public void generateCheckpointChallenges() {
+        System.out.println("LLM Microservice URL: " + llmMicroserviceUrl);
         List<Checkpoint> checkpoints = checkpointService.getCheckpointsByDate(LocalDate.now().plusDays(3));
         for (Checkpoint checkpoint : checkpoints) {
             generateCheckpointChallenge(checkpoint.getCourse_id());
@@ -91,8 +93,8 @@ public class ChallengeGeneratorService {
     }
 
     private Question[] generateQuestionsRequest(QuestionsRequestDAO questionsRequest) {
-        ResponseEntity<Question[]> response = restTemplate.postForObject(llmMicroserviceUrl, questionsRequest, ResponseEntity.class);
-        Question[] questions = response.getBody();
+        // ResponseEntity<Question[]> response = restTemplate.postForObject(llmMicroserviceUrl, questionsRequest, ResponseEntity.class);
+        Question[] questions = restTemplate.postForObject(llmMicroserviceUrl + "/generate_question", questionsRequest, Question[].class);
 
         return questions;
     }

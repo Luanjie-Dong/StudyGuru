@@ -3,22 +3,33 @@ from supabaseClient import supabase
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import os
+import datetime
 
 app = Flask(__name__)
 
 CORS(app)
 
+def format_datetime(data):
+    """Format datetime fields to be compatible with Java's LocalDateTime parser"""
+    if isinstance(data, list):
+        for item in data:
+            if 'created_at' in item and item['created_at']:
+                # Truncate microseconds to 3 digits (milliseconds) and remove timezone
+                dt = datetime.datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
+                item['created_at'] = dt.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
+    return data
+
 @app.route("/course", methods=['GET'])
 def get_all_courses():
     """
         PARAMS:
-        userid:502a0caa-8812-424f-9490-eb73f2722ac0
+        userid:502a0caa-8812-424f-9490-eb73f2722ac0 (optional)
     
         Returns:
         {
             "course_id": "d14c272a-e38d-4cfb-b952-e2617029a2d2",
             "course_name": "DBTT",
-            "created_at": "2025-02-22T06:57:01.417418+00:00",
+            "created_at": "2025-02-22T06:57:01.417",  # Format compatible with Java LocalDateTime
             "streak": 0,
             "userid": "502a0caa-8812-424f-9490-eb73f2722ac0",
             "completed_challenge": false
@@ -26,22 +37,33 @@ def get_all_courses():
     """
 
     userid = request.args.get('userid')
-    if not userid:
-        return jsonify({'Error':'Missing userid'}),400
     
     try:
-        response = (
-            supabase.table('course')
-            .select('*')
-            .eq('userid',userid)
-            .execute())
-        if response.data:
-            return jsonify(response.data),200
+        # If userid is provided, filter courses by that user
+        if userid:
+            response = (
+                supabase.table('course')
+                .select('*')
+                .eq('userid', userid)
+                .execute())
+            if response.data:
+                formatted_data = format_datetime(response.data)
+                return jsonify(formatted_data), 200
+            else:
+                return jsonify([]), 200
+        # If no userid is provided, return all courses
         else:
-            return jsonify({'Error':"User has no courses!"}),404
+            response = (
+                supabase.table('course')
+                .select('*')
+                .execute())
+            if response.data:
+                formatted_data = format_datetime(response.data)
+                return jsonify(formatted_data), 200
+            else:
+                return jsonify([]), 200
     except Exception as e:
-        return jsonify({"Error":str(e)}),500
-    
+        return jsonify({"Error": str(e)}), 500
 
 @app.route("/course", methods=['POST'])
 def add_one_course():
