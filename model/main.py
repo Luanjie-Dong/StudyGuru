@@ -109,7 +109,7 @@ def review_quiz():
     
 # Helper functions  
 def generate_questions(num,course,modules):
-
+    
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     title_model = "./title_model"
     model = sguru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
