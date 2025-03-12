@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from StudyGuru import StudyGuru as sguru , StudyGuruReviewer as sgurureview
+from StudyGuru import StudyGuruQG as sguruqg , StudyGuruReviewer as sgurureview
 from flask_cors import CORS  
-from rag import SGRagModel as ragmodel
+from rag import StudyGuruRag as sgururag
 from endpoints import get_topics , get_quizzes , get_course
 import json
 
@@ -55,7 +55,7 @@ def generate_topics():
         return jsonify({"error": "Missing notes or module data"}), 400
     
     print("Generating topics for document...",flush=True)
-    rag = ragmodel(hugging_embedding,course,title_model)
+    rag = sgururag(hugging_embedding,course,title_model)
 
     
     attempts = 3
@@ -116,7 +116,7 @@ def review_quiz():
 def generate_questions(num,course,modules):
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     title_model = "./title_model"
-    model = sguru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
+    model = sguruqg(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
 
     print("Extraction topics for question generation",flush=True)
 

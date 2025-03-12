@@ -16,7 +16,7 @@ import torch
 load_dotenv()
 
 # StudyGuru Rag Model = SGRagModel
-class SGRagModel:
+class StudyGuruRag:
     def __init__(self, embedding_model: str = "", course = "", title_model_name: str = ""):
         self.course = course
         

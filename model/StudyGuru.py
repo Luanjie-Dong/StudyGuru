@@ -1,4 +1,4 @@
-from rag import SGRagModel 
+from rag import StudyGuruRag
 import os
 from dotenv import load_dotenv
 from google import genai
@@ -10,7 +10,7 @@ import numpy as np
 
 load_dotenv()
 
-class StudyGuru(SGRagModel):
+class StudyGuruQG(StudyGuruRag):
     def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = "", collection: str = "",title_model: str=""):
 
 
@@ -81,7 +81,7 @@ class StudyGuru(SGRagModel):
         except json.JSONDecodeError as e:
             return f"Error parsing JSON response: {str(e)}\nRaw response: {response.text}"  
 
-class StudyGuruReviewer(SGRagModel):
+class StudyGuruReviewer(StudyGuruRag):
     def __init__(self, model_name: str ="gemini-2.0-flash",embedding_model: str = "", collection: str = "",title_model: str=""):
         self.api_key = os.getenv("GEMINI_API_KEY")  
         self.client = genai.Client(api_key=self.api_key)
