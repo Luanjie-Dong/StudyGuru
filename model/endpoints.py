@@ -65,4 +65,5 @@ def get_quizzes(challenge_id):
 
 
 
-
+def get_course(challenge_id):
+    pass
