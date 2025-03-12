@@ -66,4 +66,18 @@ def get_quizzes(challenge_id):
 
 
 def get_course(challenge_id):
-    pass
+    questions_endpoint = f"http://challenge:5000/challenge_info?challenge_id={challenge_id}"
+    # questions_endpoint = f"http://127.0.0.1:5006/challenge_info?challenge_id={challenge_id}"
+
+
+    try:
+        response = requests.get(questions_endpoint)
+        response.raise_for_status()
+
+        questions_data = response.json()
+
+        return questions_data['course_id']          
+
+
+    except requests.exceptions.RequestException as e:
+            print(f"Error fetching content for module: {challenge_id}: {e}")

@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from StudyGuru import StudyGuru as sguru , StudyGuruReviewer as sgurureview
 from flask_cors import CORS  
 from rag import SGRagModel as ragmodel
-from endpoints import get_topics , get_quizzes
+from endpoints import get_topics , get_quizzes , get_course
 import json
 
 app = Flask(__name__)
@@ -91,19 +91,17 @@ def review_quiz():
 
     try:
         print(f"Extracting questions from challenge {challenge_id} to review",flush=True)
-        # questions = get_quizzes(challenge_id)
         questions = data["questions"]
 
-        # Used to test
-        # with open("test_data/questions.json", 'r', encoding='utf-8') as file:
-        #     test = json.load(file)
-        # questions = test
+        hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
+        title_model = "./title_model"
 
         if questions:
             print(f"Reviewing questions of {challenge_id}",flush=True)
             try:
-                model = sgurureview()
-                reviewed = model.review(questions)
+                course = get_course(challenge_id)
+                model = sgurureview(embedding_model=hugging_embedding,collection=course,title_model=title_model)
+                reviewed = model.review(questions,course)
                 return reviewed
             except Exception as e:
                 print(e)

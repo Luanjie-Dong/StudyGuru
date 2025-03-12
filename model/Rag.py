@@ -144,9 +144,10 @@ class SGRagModel:
     def retrieve(self, query , modules):
         query_embedding = self.embedding_model.encode(query).tolist()
 
-        filter_condition = {
-        "module": {"$in": modules}  
-        }
+        if modules:
+            filter_condition = {
+            "module": {"$in": modules}  
+            }
 
         results = self.pinecone_index.query(
             vector=query_embedding,
