@@ -70,12 +70,48 @@ def get_one_challenge_score():
                     .eq('challenge_id',challenge_id)
                     .execute())
         if response.data is not None:
-            print(response.data)
+            # print(response.data)
             data = response.data
             return jsonify({"Message":'Challenge score retrieved!',
                             "Score":data[0]['challenge_score']}),201
         else: 
             return jsonify({"Error": 'Challenge has no questions.'}),500
+        
+    except Exception as e:
+        return jsonify({"Error":str(e)}),500
+    
+@app.route("/challenge_info", methods=['GET'])
+def get_one_challenge_info():
+    '''
+        PARAMS:
+        challenge_id:922af3d8-e463-4489-b299-1d0bfac234e6
+
+        RETURNS:
+        [
+            {
+                "challenge_id": "922af3d8-e463-4489-b299-1d0bfac234e6",
+                "challenge_score": 0,
+                "course_id": "c7cafe8b-b151-48db-a22a-a3f50285683b",
+                "end_datetime": null,
+                "start_datetime": "2025-03-12T08:50:17.229648+00:00",
+                "type": "DAILY"
+            }
+        ]
+    '''
+    challenge_id=request.args.get('challenge_id')
+    if not challenge_id:
+        return jsonify({'Error':'Missing challenge_id!'}),400
+    
+    try:
+        response = (supabase.table('challenge')
+                    .select('*')
+                    .eq('challenge_id',challenge_id)
+                    .execute())
+        if response.data is not None:
+            data = response.data
+            return jsonify(data),200
+        else: 
+            return jsonify({"Error": f'Challenge {challenge_id} not found..'}),500
         
     except Exception as e:
         return jsonify({"Error":str(e)}),500
