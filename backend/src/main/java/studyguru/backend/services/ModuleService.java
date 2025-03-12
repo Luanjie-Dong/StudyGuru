@@ -17,7 +17,7 @@ public class ModuleService {
     private RestTemplate restTemplate = new RestTemplate();
 
     public ArrayList<studyguru.backend.models.Module> getModulesByCourseId(String course_id) {
-        ResponseEntity<studyguru.backend.models.Module[]> response = restTemplate.getForEntity(moduleMicroserviceUrl + "/course?course_id=" + course_id, studyguru.backend.models.Module[].class);
+        ResponseEntity<studyguru.backend.models.Module[]> response = restTemplate.getForEntity(moduleMicroserviceUrl + "/module?course_id=" + course_id, studyguru.backend.models.Module[].class);
         studyguru.backend.models.Module[] modules = response.getBody();
         return modules != null ? new ArrayList<>(Arrays.asList(modules)) : new ArrayList<>();
     }
