@@ -157,14 +157,18 @@ def update_streak():
     try:
         response=(
             supabase.table('course')
-            .select('streak')
+            .select('streak','completed_challenge')
             .eq('course_id',course_id)
             .execute()
         )
         if response.data:
             current_streak = response.data[0]['streak']
+            completed = response.data[0]['completed_challenge']
         else:
             return jsonify({"Error": f'Could not retrieve streak for course {course_id}...'}),500
+        
+        if completed:
+            return jsonify({"Message:":f"Challenge for course {course_id} has already been completed!"}),201
         
         new_streak = current_streak +1
         update_data = {
