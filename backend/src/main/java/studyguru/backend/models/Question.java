@@ -1,25 +1,26 @@
 package studyguru.backend.models;
 
 import java.util.*;
-// import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
-// @Entity
-// @Table(name="questions")
 public class Question {
-    // @Id
     private String question_id;
     private String challenge_id;
     private int question_no;
     private QuestionDetail question_detail;
     private String input;
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     private List<String> answer;
     private String explanation;
     private String hint;
-    private boolean correct;
+    private Boolean correct; // changed from boolean to Boolean
     private int question_score;
     
+    // Added default constructor for Jackson deserialization
+    public Question() { }
+
     public Question(String question_id, String challenge_id, int question_no, QuestionDetail question_detail,
-            String input, List<String> answer, String explanation, String hint, boolean correct, int question_score) {
+            String input, List<String> answer, String explanation, String hint, Boolean correct, int question_score) {
         this.question_id = question_id;
         this.challenge_id = challenge_id;
         this.question_no = question_no;
@@ -64,7 +65,7 @@ public class Question {
         return hint;
     }
 
-    public boolean isCorrect() {
+    public Boolean isCorrect() {
         return correct;
     }
 

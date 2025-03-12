@@ -7,21 +7,21 @@ import studyguru.backend.enums.QuestionType;
 
 // @Embeddable
 public class QuestionDetail {
-    private QuestionType question_type;
+    private QuestionType type;
     private ArrayList<String> options;
     private String question;
 
     public QuestionDetail() {
     }
 
-    public QuestionDetail(QuestionType question_type, ArrayList<String> options, String question) {
-        this.question_type = question_type;
+    public QuestionDetail(QuestionType type, ArrayList<String> options, String question) {
+        this.type = type;
         this.options = options;
         this.question = question;
     }
 
-    public QuestionType getQuestion_type() {
-        return question_type;
+    public QuestionType getType() {
+        return type;
     }
 
     public ArrayList<String> getOptions() {
