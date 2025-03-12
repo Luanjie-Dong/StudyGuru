@@ -20,6 +20,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Service
 public class ChallengeGeneratorService {
 
@@ -93,9 +95,14 @@ public class ChallengeGeneratorService {
     }
 
     private Question[] generateQuestionsRequest(QuestionsRequestDAO questionsRequest) {
-        // ResponseEntity<Question[]> response = restTemplate.postForObject(llmMicroserviceUrl, questionsRequest, ResponseEntity.class);
-        Question[] questions = restTemplate.postForObject(llmMicroserviceUrl + "/generate_question", questionsRequest, Question[].class);
-
-        return questions;
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(llmMicroserviceUrl + "/generate_question", questionsRequest, String.class);
+        String responseBody = responseEntity.getBody();
+        // System.out.println("Raw response: " + responseBody);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(responseBody, Question[].class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize response", e);
+        }
     }
 }

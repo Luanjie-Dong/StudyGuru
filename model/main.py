@@ -12,6 +12,7 @@ CORS(app)
 def generate_quiz():
     
     data = request.json
+    print(data)
     if not data:
             return jsonify({"error": "No JSON data provided"}), 400
     
@@ -23,9 +24,15 @@ def generate_quiz():
     try:
         num_questions = challenge_questions(challenge_type)
         questions = generate_questions(num_questions,course,modules)
-    except:
-        return [], 400
-    return format_questions(questions,challenge_id)
+        
+        # Check if questions is an error message (string)
+        if isinstance(questions, str):
+            return jsonify({"error": questions}), 400
+            
+        return format_questions(questions,challenge_id)
+    except Exception as e:
+        print(f"Error generating quiz: {str(e)}")
+        return jsonify({"error": "Failed to generate questions"}), 400
 
 
 @app.route("/generate_topics",methods=['POST'])
@@ -109,7 +116,6 @@ def review_quiz():
     
 # Helper functions  
 def generate_questions(num,course,modules):
-    
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     title_model = "./title_model"
     model = sguru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
@@ -128,10 +134,14 @@ def generate_questions(num,course,modules):
 
     try:
         questions = model.generate(topics,modules)
+        # Check if questions is a list as expected
+        if not isinstance(questions, list):
+            return f"Unexpected response format: {type(questions).__name__}"
         return questions
-    except:
-        return "Error in generating questions :/"
-
+    except Exception as e:
+        print(f"Exception in question generation: {str(e)}")
+        return f"Error in generating questions: {str(e)}"
+    
 
 def challenge_questions(challenge_type):
     if challenge_type == "DAILY":
@@ -141,31 +151,38 @@ def challenge_questions(challenge_type):
     
 
 def format_questions(questions,challenge_id):
+    # Ensure questions is a list before processing
+    if not isinstance(questions, list):
+        print(f"format_questions received non-list type: {type(questions)}")
+        return jsonify({"error": "Invalid questions format"}), 400
 
     output = []
     for question in questions:
-
+        # Add a check to ensure question is a dictionary
+        if not isinstance(question, dict):
+            continue
+            
         question_detail = {
-            "type": question['question_type'],
-            "options":question['options'],
-            "question": question["question"]
+            "type": question.get('question_type', ''),
+            "options": question.get('options', []),
+            "question": question.get("question", "")
         }
 
-        if question['question_type'] in ["MCQ", "SHORT_ANSWER"]:
-            answer = [question["answer"]]
+        if question.get('question_type') in ["MCQ", "OPEN_ENDED"]:
+            answer = [question.get("answer", "")]
         else:
-            answer = question["answer"]
+            answer = question.get("answer", "")
 
         detail = {
             "challenge_id": challenge_id,
-            "question_no": question['question_no'],
-            "question_detail":question_detail,
+            "question_no": question.get('question_no', 0),
+            "question_detail": question_detail,
             "input": "",
             "answer": answer,
-            "explanation":"",
-            "hint": question["hint"],
+            "explanation": "",
+            "hint": question.get("hint", ""),
             "correct": None,
-            "question_score":0,
+            "question_score": 0,
         }
 
         output.append(detail)

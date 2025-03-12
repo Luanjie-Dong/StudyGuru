@@ -190,7 +190,7 @@ class StudyGuruReviewer:
             f"```json\n"
             f"{{\n"
             f"  \"question_no\": <integer>,\n"
-            f"  \"question_type\": \"<MCQ|Multi-select|Short open-ended>\",\n"
+            f"  \"question_type\": \"<MCQ|MULTI_SELECT|SHORT_ANSWER>\",\n"
             f"  \"question\": \"<text of the question>\",\n"
             f"  \"options\": [\"<option1>\", \"<option2>\", ...] (omit or empty array if not applicable),\n"
             f"  \"answer\": \"<correct answer(s) as a string or array if multi-select>\",\n"
