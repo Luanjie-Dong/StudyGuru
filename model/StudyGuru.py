@@ -1,4 +1,4 @@
-from rag import SGRagModel 
+from rag import StudyGuruRag
 import os
 from dotenv import load_dotenv
 from google import genai
@@ -8,14 +8,9 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
-
-
-
 load_dotenv()
 
-
-
-class StudyGuru(SGRagModel):
+class StudyGuruQG(StudyGuruRag):
     def __init__(self, model_name: str ="gemini-2.0-flash" , num : int = 0,embedding_model: str = "", collection: str = "",title_model: str=""):
 
 
@@ -84,37 +79,100 @@ class StudyGuru(SGRagModel):
             questions = json.loads(json_text)
             return questions 
         except json.JSONDecodeError as e:
+            return f"Error parsing JSON response: {str(e)}\nRaw response: {response.text}"  
+
+class StudyGuruReviewer(StudyGuruRag):
+    def __init__(self, model_name: str ="gemini-2.0-flash",embedding_model: str = "", collection: str = "",title_model: str=""):
+        self.api_key = os.getenv("GEMINI_API_KEY")  
+        self.client = genai.Client(api_key=self.api_key)
+        self.model = model_name
+        super().__init__(embedding_model, collection , title_model)
+
+    def review(self, questions):
+        
+        prompt_formatted = self.format_questions(questions)
+
+        print("Reviewing quesions now...",flush=True)
+        prompt_formatted = "\n".join(prompt_formatted)
+        generation_prompt = (
+            f"Review each question like a teacher based on the following context:\n{prompt_formatted}\n\n"
+            f"Provide feedback for each question and return the output as a JSON array.\n"
+            f"Each reviewed question should be an object with the following structure:\n"
+            f"```json\n"
+            f"{{\n"
+            f"  \"question_no\": <integer>,\n"
+            f"  \"question_type\": \"<MCQ|MULTI_SELECT|SHORT_ANSWER>\",\n"
+            f"  \"question\": \"<text of the question>\",\n"
+            f"  \"options\": [\"<option1>\", \"<option2>\", ...] (omit or empty array if not applicable),\n"
+            f"  \"answer\": \"<correct answer(s) as a string or array if multi-select>\",\n"
+            f"  \"input\": \"<user input for question>\",\n"
+            f"  \"explanation\": \"<review feedback>\"\n"
+            f"  \"question_score\": \"Give a score out of 100 percent for the review of open-ended and True or False for other question type\"\n"
+            f"}}\n"
+            f"```\n"
+            f"Ensure the response is valid JSON. If not try again"
+        )
+
+
+        response = self.client.models.generate_content(
+            model=self.model, contents=generation_prompt
+        )
+
+
+        if not response or not response.text:
+            return "No response from Gemini."
+
+        try:
+            json_text = response.text.strip()
+            if json_text.startswith("```json") and json_text.endswith("```"):
+                json_text = json_text[7:-3].strip()  
+            questions = json.loads(json_text)
+            return questions 
+        except json.JSONDecodeError as e:
             return f"Error parsing JSON response: {str(e)}\nRaw response: {response.text}"
         
 
-        
+    def format_questions(self,questions):
+        print("Formatting questions for review", flush=True)
+        prompt_formatted = []
+
+        for question in questions:
+            print(f"Reviewing question {question['question_no']}: {question['question_detail']['question']}\n", flush=True)
+
+            try:
+                context = super().retrieve(question['question_detail']['question'], [])
+            except Exception as e:
+                print(f"Error retrieving context for question {question['question_no']}: {e}", flush=True)
+                continue
+
+            content = self.format_context(context)
+
+            prompt = self.generate_prompt(question, content)
+            print("Prompt:", prompt, flush=True)
+
+            prompt_formatted.append(prompt)
+
+        return prompt_formatted
     
-# For local testing
-def save_topics(topics,file):
-    topics_path = data_path.split("/")[1]  
+    def format_context(self,context):
+        content_parts = []
+        for i, context_item in enumerate(context):
+            text = context_item['text']
+            page = context_item['page']
+            note_url = context_item['note_url']
+            content_parts.append(f"{text} extracted from page: {page} and note URL: {note_url}")
+            print(f"Context {i+1}:\n{text}\n", flush=True)
+        return "\n\n".join(content_parts)
+    
 
-    save_dir = "test_data"
-    os.makedirs(save_dir, exist_ok=True)
-
-    file_path = os.path.join(save_dir, f"{topics_path}.txt")
-
-    with open(file_path, "w") as file:
-        for topic in topics:
-            file.write(f"{topic}\n")
-
-    print(f"Topics saved to {file_path}")
-
-# For local testing
-def load_topic(path):
-    topics = []
-
-    with open(path, 'r') as file:
-        for topic in file:
-            topic = topic.strip()  
-            if topic:  
-                topics.append(topic)
-
-    return topics  
+    def generate_prompt(self,question, content):
+        return (
+            f"User has selected answer: {question['input']}\n"
+            f"for question {question['question_no']} [{question['question_detail']['type']}]: "
+            f"{question['question_detail']['question']} with correct answer(s): {question['answer']} "
+            f"and options: {question['question_detail']['options']}\n"
+            f"Question context:\n{content}"
+        )
 
 class TopicSelector:
     def __init__(self,num_topics: int = 5, embedder: str ="sentence-transformers/all-MiniLM-L6-v2"):
@@ -155,70 +213,34 @@ class TopicSelector:
             remaining_indices.remove(next_index)
 
         return [filtered_topics[i] for i in selected_indices]
-    
 
-class StudyGuruReviewer:
-    def __init__(self, model_name: str ="gemini-2.0-flash"):
-        self.api_key = os.getenv("GEMINI_API_KEY")  
-        self.client = genai.Client(api_key=self.api_key)
-        self.model = model_name
+# For local testing
+def save_topics(topics,file):
+    topics_path = data_path.split("/")[1]  
 
-    def review(self, questions):
-        
-        prompt_formatted = []
+    save_dir = "test_data"
+    os.makedirs(save_dir, exist_ok=True)
 
-        print("Formatting questions for review",flush=True)
-        for question in questions:
-            print("Reviewing question",question,"\n")
+    file_path = os.path.join(save_dir, f"{topics_path}.txt")
 
-            prompt = (
-            f"User has selected answer: {question['input']}\n"
-            f"for question {question['question_no']} [{question['question_detail']['type']}]: "
-            f"{question['question_detail']['question']} with correct answer(s): {question['answer']} "
-            f"and options: {question['question_detail']['options']}"
-            )
+    with open(file_path, "w") as file:
+        for topic in topics:
+            file.write(f"{topic}\n")
 
-            print("Prompt",prompt)
-            prompt_formatted.append(prompt)
+    print(f"Topics saved to {file_path}")
 
-        print("Reviewing quesions now...",flush=True)
-        prompt_formatted = "\n".join(prompt_formatted)
-        generation_prompt = (
-            f"Review each question based on the following context:\n{prompt_formatted}\n\n"
-            f"Provide feedback for each question and return the output as a JSON array.\n"
-            f"Each reviewed question should be an object with the following structure:\n"
-            f"```json\n"
-            f"{{\n"
-            f"  \"question_no\": <integer>,\n"
-            f"  \"question_type\": \"<MCQ|MULTI_SELECT|SHORT_ANSWER>\",\n"
-            f"  \"question\": \"<text of the question>\",\n"
-            f"  \"options\": [\"<option1>\", \"<option2>\", ...] (omit or empty array if not applicable),\n"
-            f"  \"answer\": \"<correct answer(s) as a string or array if multi-select>\",\n"
-            f"  \"input\": \"<user input for question>\",\n"
-            f"  \"explanation\": \"<review feedback>\"\n"
-            f"  \"question_score\": \"Give a score out of 100 percent for the review of open-ended and True or False for other question type\"\n"
-            f"}}\n"
-            f"```\n"
-            f"Ensure the response is valid JSON. If not try again"
-        )
+# For local testing
+def load_topic(path):
+    topics = []
 
+    with open(path, 'r') as file:
+        for topic in file:
+            topic = topic.strip()  
+            if topic:  
+                topics.append(topic)
 
-        response = self.client.models.generate_content(
-            model=self.model, contents=generation_prompt
-        )
+    return topics  
 
-
-        if not response or not response.text:
-            return "No response from Gemini."
-
-        try:
-            json_text = response.text.strip()
-            if json_text.startswith("```json") and json_text.endswith("```"):
-                json_text = json_text[7:-3].strip()  
-            questions = json.loads(json_text)
-            return questions 
-        except json.JSONDecodeError as e:
-            return f"Error parsing JSON response: {str(e)}\nRaw response: {response.text}"
 
 if __name__ == "__main__":
     data_path = "test_data/test.pdf"
@@ -228,7 +250,7 @@ if __name__ == "__main__":
     collection = "test-module"
 
 
-    model = StudyGuru(num=5,embedding_model=hugging_embedding,collection=collection)
+    model = StudyGuruQG(num=5,embedding_model=hugging_embedding,collection=collection)
 
     topic_path = "test_data/test.pdf.txt"
 

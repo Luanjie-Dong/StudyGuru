@@ -16,7 +16,7 @@ import torch
 load_dotenv()
 
 # StudyGuru Rag Model = SGRagModel
-class SGRagModel:
+class StudyGuruRag:
     def __init__(self, embedding_model: str = "", course = "", title_model_name: str = ""):
         self.course = course
         
@@ -144,16 +144,23 @@ class SGRagModel:
     def retrieve(self, query , modules):
         query_embedding = self.embedding_model.encode(query).tolist()
 
-        filter_condition = {
-        "module": {"$in": modules}  
-        }
+        if modules:
+            filter_condition = {
+            "module": {"$in": modules}  
+            }
 
-        results = self.pinecone_index.query(
-            vector=query_embedding,
-            top_k=2,
-            include_metadata=True,
-            filter_condition = filter_condition
-        )
+            results = self.pinecone_index.query(
+                vector=query_embedding,
+                top_k=2,
+                include_metadata=True,
+                filter_condition = filter_condition
+            )
+        else:
+            results = self.pinecone_index.query(
+                vector=query_embedding,
+                top_k=2,
+                include_metadata=True,
+            )
 
         formatted_results = []
         for match in results['matches']:

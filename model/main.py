@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
-from StudyGuru import StudyGuru as sguru , StudyGuruReviewer as sgurureview
+from StudyGuru import StudyGuruQG as sguruqg , StudyGuruReviewer as sgurureview
 from flask_cors import CORS  
-from rag import SGRagModel as ragmodel
-from endpoints import get_topics , get_quizzes
+from rag import StudyGuruRag as sgururag
+from endpoints import get_topics , get_quizzes , get_course
 import json
 
 app = Flask(__name__)
@@ -55,7 +55,7 @@ def generate_topics():
         return jsonify({"error": "Missing notes or module data"}), 400
     
     print("Generating topics for document...",flush=True)
-    rag = ragmodel(hugging_embedding,course,title_model)
+    rag = sgururag(hugging_embedding,course,title_model)
 
     
     attempts = 3
@@ -91,18 +91,17 @@ def review_quiz():
 
     try:
         print(f"Extracting questions from challenge {challenge_id} to review",flush=True)
-        # questions = get_quizzes(challenge_id)
         questions = data["questions"]
 
-        # Used to test
-        # with open("test_data/questions.json", 'r', encoding='utf-8') as file:
-        #     test = json.load(file)
-        # questions = test
+        hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
+        title_model = "./title_model"
 
         if questions:
             print(f"Reviewing questions of {challenge_id}",flush=True)
             try:
-                model = sgurureview()
+                course = get_course(challenge_id)
+                print(f'Found {course} of {challenge_id}',flush=True)
+                model = sgurureview(embedding_model=hugging_embedding,collection=course,title_model=title_model)
                 reviewed = model.review(questions)
                 return reviewed
             except Exception as e:
@@ -118,7 +117,7 @@ def review_quiz():
 def generate_questions(num,course,modules):
     hugging_embedding = "sentence-transformers/all-MiniLM-L6-v2"
     title_model = "./title_model"
-    model = sguru(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
+    model = sguruqg(num=num,embedding_model=hugging_embedding,collection=course,title_model=title_model)
 
     print("Extraction topics for question generation",flush=True)
 
