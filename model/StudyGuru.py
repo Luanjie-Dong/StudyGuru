@@ -95,7 +95,7 @@ class StudyGuruReviewer(StudyGuruRag):
         print("Reviewing quesions now...",flush=True)
         prompt_formatted = "\n".join(prompt_formatted)
         generation_prompt = (
-            f"Review each question based on the following context:\n{prompt_formatted}\n\n"
+            f"Review each question like a teacher based on the following context:\n{prompt_formatted}\n\n"
             f"Provide feedback for each question and return the output as a JSON array.\n"
             f"Each reviewed question should be an object with the following structure:\n"
             f"```json\n"
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     collection = "test-module"
 
 
-    model = StudyGuru(num=5,embedding_model=hugging_embedding,collection=collection)
+    model = StudyGuruQG(num=5,embedding_model=hugging_embedding,collection=collection)
 
     topic_path = "test_data/test.pdf.txt"
 

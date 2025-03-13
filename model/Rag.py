@@ -149,12 +149,18 @@ class StudyGuruRag:
             "module": {"$in": modules}  
             }
 
-        results = self.pinecone_index.query(
-            vector=query_embedding,
-            top_k=2,
-            include_metadata=True,
-            filter_condition = filter_condition
-        )
+            results = self.pinecone_index.query(
+                vector=query_embedding,
+                top_k=2,
+                include_metadata=True,
+                filter_condition = filter_condition
+            )
+        else:
+            results = self.pinecone_index.query(
+                vector=query_embedding,
+                top_k=2,
+                include_metadata=True,
+            )
 
         formatted_results = []
         for match in results['matches']:

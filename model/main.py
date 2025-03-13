@@ -100,8 +100,9 @@ def review_quiz():
             print(f"Reviewing questions of {challenge_id}",flush=True)
             try:
                 course = get_course(challenge_id)
+                print(f'Found {course} of {challenge_id}',flush=True)
                 model = sgurureview(embedding_model=hugging_embedding,collection=course,title_model=title_model)
-                reviewed = model.review(questions,course)
+                reviewed = model.review(questions)
                 return reviewed
             except Exception as e:
                 print(e)
