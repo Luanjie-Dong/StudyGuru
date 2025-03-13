@@ -7,7 +7,7 @@
 - **Functionality**:
   - Handles document ingestion from various formats.
   - Performs retrieval of relevant information based on user queries.
-  - Extracts key topics and concepts from ingested documents.
+  - Extracts key topics and concepts from ingested documents using custom fine-tuned title extraction model from Falconai/text_summarization.
 - **Usage**: This module serves as the backbone for processing and understanding unstructured data in the form of documents.
 
 ---
