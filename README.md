@@ -2,12 +2,6 @@
 
 ## StudyGuru Model 
 
-This repository contains the core components of the **StudyGuru** model, designed to streamline document ingestion, retrieval, topic extraction, and question generation for educational purposes. Below is a detailed breakdown of the files and their functionalities.
-
----
-
-### File Structure
-
 #### 1. `rag.py`
 - **Purpose**: Implements the Retrieval-Augmented Generation (RAG) pipeline for **StudyGuru**.
 - **Functionality**:
