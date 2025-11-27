@@ -12,14 +12,14 @@ StudyGURU is an AI-powered educational platform designed to democratize access t
 | **AI Review and Feedback** | Immediate, thorough feedback on incorrect answers with detailed explanations to help rectify misconceptions, encouraging self-directed learning through contextual guidance. | ✅ Implemented |
 
 ## Technical Implementations
-- **RAG Framework** - [View Code](https://github.com/Luanjie-Dong/StudyGURU/blob/main/StudyGURU/extractor.py)
- - Implements Retrieval-Augmented Generation (RAG) to enhance information retrieval. It includes topic summarization to enrich chunk information and a reranking mechanism to ensure relevant answers. Utilizes technologies like HuggingFace embeddings, Pinecone for vector storage, and custom classes for document processing and retrieval.
+- **RAG Framework** - [View Code](https://github.com/Luanjie-Dong/StudyGuru/blob/main/model/StudyGuru.py)
+  - Implements Retrieval-Augmented Generation (RAG) to enhance information retrieval. It includes topic summarization to enrich chunk information and a reranking mechanism to ensure relevant answers. Utilizes technologies like HuggingFace embeddings, Pinecone for vector storage, and custom classes for document processing and retrieval.
 
-- **Quiz Generation** - [View Code](https://github.com/Luanjie-Dong/StudyGURU/blob/main/StudyGURU/app.py)
- - Enables the creation of quizzes, topic generation, quiz review, question generation, challenge questions, and question formatting, leveraging AI to tailor educational content.
+- **Quiz Generation** - [View Code](https://github.com/Luanjie-Dong/StudyGuru/blob/main/model/main.py)
+  - Enables the creation of quizzes, topic generation, quiz review, question generation, challenge questions, and question formatting, leveraging AI to tailor educational content.
 
-- **Data Processing and Cleaning** - [View Code](https://github.com/Luanjie-Dong/StudyGURU/blob/main/StudyGURU/cleaner.py)
- - Cleans and preprocesses text data from various sources to ensure high-quality input for the AI models, improving accuracy and reliability of the generated content.
+- **Data Processing and Cleaning** - [View Code](https://github.com/Luanjie-Dong/StudyGuru/blob/main/model/cleaner.py)
+  - Cleans and preprocesses text data from various sources to ensure high-quality input for the AI models, improving accuracy and reliability of the generated content.
 
 ## Running the Application
 Follow these steps to run the application:
