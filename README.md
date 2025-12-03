@@ -1,5 +1,7 @@
 # StudyGURU
 
+![studyguru](./images/guru.png)
+
 StudyGURU is an ***AI-powered educational platform*** designed to democratize access to personalized education. By leveraging Generative AI, we aim to provide high-quality, adaptive learning experiences at a fraction of the cost of traditional tuition, making quality education accessible to students from all socioeconomic backgrounds.
 
 ---
